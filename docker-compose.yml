@@ -1,0 +1,30 @@
+version: '3'
+services:
+  api:
+    container_name: certain-ice-api
+    build: ./certain-ice-api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./certain-ice-api:/api
+    depends_on:
+      - dev-db
+    environment:
+      RAILS_ENV: 'development'
+      DEV_DB_DATABASE: 'certain-ice-dev'
+      DEV_DB_USERNAME: dfire
+      DEV_DB_PASSWORD: pwd
+      DEV_DB_HOST: certain-ice-dev-db
+    command:
+      rails s -b 0.0.0.0
+  dev-db:
+    container_name: certain-ice-dev-db
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: db-root-password
+      MYSQL_DATABASE: certain-ice-dev
+      MYSQL_USER: dfire
+      MYSQL_PASSWORD: pwd
+    volumes:
+      - ./data/database:/var/lib/mysql
+    
