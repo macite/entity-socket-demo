@@ -37,6 +37,7 @@ class CertainIceApi < Grape::API
     Rack::Response.new( {error: message}.to_json, status, { 'Content-type' => 'text/error' } )
   end
 
+  mount UsersApi
 
   add_swagger_documentation \
     base_path: nil,
