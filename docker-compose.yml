@@ -17,6 +17,18 @@ services:
       DEV_DB_HOST: certain-ice-dev-db
     command:
       rails s -b 0.0.0.0
+  ui:
+    container_name: certain-ice-ui
+    build: ./certain-ice-ui
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./certain-ice-ui:/certain-ice-ui
+      - /certain-ice-ui/node_modules
+    depends_on:
+      - certain-ice-api
+    command:
+      npm start
   dev-db:
     container_name: certain-ice-dev-db
     image: mariadb
