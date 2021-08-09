@@ -1,13 +1,16 @@
+import { IterableChangeRecord } from '@angular/core';
 import { Entity } from './entity';
 
 const KEYS =
   [
+    'id',
     'username',
     'name',
     'password'
   ];
 
 export class User extends Entity {
+  id: number = -1;
   username: string = '';
   name: string = '';
   password: string = '';
