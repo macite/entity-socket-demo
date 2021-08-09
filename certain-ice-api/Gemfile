@@ -62,4 +62,6 @@ gem 'grape-swagger'
 gem 'grape-swagger-rails'
 gem 'mysql2'
 
+gem 'rack-cors', require: 'rack/cors'
+
 
