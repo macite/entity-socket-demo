@@ -36,6 +36,15 @@ class UsersApi < Grape::API
     User.find(params[:id]).update! user_parameters
   end
 
+  desc 'Delete the user with the indicated id'
+  params do
+    optional :id, type: Integer, desc: 'The id of the user to delete'
+  end
+  delete '/users/:id' do
+    User.find(params[:id]).destroy!
+    true
+  end
+
   get '/users' do
     User.all
   end

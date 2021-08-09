@@ -1,3 +1,24 @@
 <div>
-  {{users}}
+  <table>
+    <thead>
+      <th>Username</th>
+      <th>Name</th>
+      <th>Actions</th>
+    </thead>
+    <tr *ngFor="let user of users">
+      <td>{{user.username}}</td>
+      <td>{{user.name}}</td>
+      <td><button (click)="deleteUser(user)">Delete</button></td>
+    </tr>
+  </table>
+
+  <h3>Create User</h3>
+  <label for="username-input">Username:</label>
+  <input type="text" id="username-input" #username>
+  <label for="name-input">Name:</label>
+  <input type="text" id="name-input" #name>
+  <label for="name-input">Password:</label>
+  <input type="password" id="password-input" #password>
+  <button (click)="addUser(username.value, name.value, password.value)">Add User</button>
+
 </div>
