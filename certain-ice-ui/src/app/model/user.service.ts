@@ -1,7 +1,7 @@
 import { User } from './user';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EntityService } from './entity.service';
+import { EntityService } from '@doubtfire-lms/entity-service';
 
 @Injectable()
 export class UserService extends EntityService<User> {
