@@ -10,7 +10,7 @@
   },
   "private": true,
   "dependencies": {
-    "@doubtfire-lms/entity-service": "^1.0.6",
+    "@doubtfire-lms/entity-service": "file:/entity-service",
     "@angular/animations": "~12.2.0",
     "@angular/common": "~12.2.0",
     "@angular/compiler": "~12.2.0",

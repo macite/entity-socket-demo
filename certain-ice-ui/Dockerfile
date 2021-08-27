@@ -1,4 +1,4 @@
-FROM node:14
+FROM node:16
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -10,6 +10,7 @@ ENV NODE_ENV docker
 
 # Install packages within the container
 COPY package.json package-lock.json /certain-ice-ui/
-RUN npm install
+# RUN npm install
+# CMD npm start
 
-CMD npm start
+CMD start.sh

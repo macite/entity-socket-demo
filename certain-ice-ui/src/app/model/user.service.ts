@@ -15,13 +15,13 @@ export class UserService extends EntityService<User> {
     super(httpClient, API_URL);
   }
 
+  public keyForJson(json: any): string {
+    return json.id;
+  }
+
   protected createInstanceFrom(json: any, other?: any): User {
     const user = new User();
     user.updateFromJson(json);
     return user;
-  }
-
-  public keyForJson(json: any): string {
-    return json.id;
   }
 }
