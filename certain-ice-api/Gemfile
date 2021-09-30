@@ -65,3 +65,7 @@ gem 'mysql2'
 gem 'rack-cors', require: 'rack/cors'
 
 
+
+gem "redis", "~> 4.4"
+
+gem "actioncable", "~> 6.1"

@@ -3,4 +3,5 @@ Rails.application.routes.draw do
   resources :messages, only: [:new, :create]
   mount CertainIceApi => '/'
   mount GrapeSwaggerRails::Engine => '/api/docs'
+  mount ActionCable.server => '/cable'
 end

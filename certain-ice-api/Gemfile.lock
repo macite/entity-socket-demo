@@ -169,6 +169,7 @@ GEM
     rb-fsevent (0.11.0)
     rb-inotify (0.10.1)
       ffi (~> 1.0)
+    redis (4.4.0)
     ruby2_keywords (0.0.5)
     spring (2.1.1)
     sprockets (4.0.2)
@@ -195,6 +196,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  actioncable (~> 6.1)
   bootsnap (>= 1.4.4)
   byebug
   grape
@@ -207,6 +209,7 @@ DEPENDENCIES
   rack-cors
   rack-mini-profiler (~> 2.0)
   rails (~> 6.1.4)
+  redis (~> 4.4)
   spring
   tzinfo-data
   web-console (>= 4.1.0)
@@ -215,4 +218,4 @@ RUBY VERSION
    ruby 3.0.2p107
 
 BUNDLED WITH
-   2.2.24
+   2.2.27

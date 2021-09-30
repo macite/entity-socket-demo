@@ -10,7 +10,7 @@ export class ActionCableService {
   subscribeMe() {
     this.consumer = ActionCable.createConsumer(`ws://localhost:3334/cable`);
     console.log("Trying connection");
-    this.consumer.subscriptions.create("chat_channel", {
+    this.consumer.subscriptions.create("actionchat_channel", {
       connected() {
         console.log("Subscription is ready for use");
       },
