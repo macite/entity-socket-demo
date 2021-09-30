@@ -13,10 +13,10 @@ class MessageApi < Grape::API
 
     message = Message.create!(message_parameters)
 
-    if message.save
-      ActionCable.server.broadcast 'actionchat_channel',
-                              content: message.content
-    end
+    # if message.save
+    #   ActionCable.server.broadcast 'actionchat_channel',
+    #                           content: message.content
+    # end
 
     message
   end

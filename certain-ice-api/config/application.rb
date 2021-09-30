@@ -19,7 +19,7 @@ module Api
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
     config.action_cable.mount_path = '/cable'
-    config.action_cable.allowed_request_origins = ['http://localhost:4200', 'http://localhost:3000']
+    # config.action_cable.allowed_request_origins = ['http://localhost:3001', 'http://127.0.0.1:3001']
 
 
     # CORS config
