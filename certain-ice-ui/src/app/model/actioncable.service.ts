@@ -7,10 +7,11 @@ import * as ActionCable from 'actioncable';
 export class ActionCableService {
   private consumer: any;
   constructor() {}
-  subscribeMe() {
-    this.consumer = ActionCable.createConsumer(`ws://localhost:3334/cable`);
+  
+  public subscribeMe() {
+    this.consumer = ActionCable.createConsumer(`ws://localhost:3000/cable`);
     console.log("Trying connection");
-    this.consumer.subscriptions.create("actionchat_channel", {
+    this.consumer.subscriptions.create("RoomChannel", {
       connected() {
         console.log("Subscription is ready for use");
       },

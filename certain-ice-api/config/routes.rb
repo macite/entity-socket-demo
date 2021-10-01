@@ -4,4 +4,5 @@ Rails.application.routes.draw do
   mount CertainIceApi => '/'
   mount GrapeSwaggerRails::Engine => '/api/docs'
   mount ActionCable.server => '/cable'
+  # resources :action_cable, param: :slug
 end

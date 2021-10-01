@@ -1,5 +1,6 @@
 class ActionchatChannel < ApplicationCable::Channel
   def subscribed
+
     stream_from "actionchat_channel"
   end
 

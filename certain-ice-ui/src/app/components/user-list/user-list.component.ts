@@ -2,6 +2,7 @@ import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { User } from "src/app/model/user";
 import { UserService } from "src/app/model/user.service";
+import { ActionCableService } from "src/app/model/actioncable.service";
 
 @Component({
   selector: 'user-list',
@@ -12,7 +13,8 @@ export class UserListComponent implements OnInit {
   users: User[] = new Array<User>();
 
   constructor(
-    private userService: UserService
+    private userService: UserService,
+    private actionCable: ActionCableService
   ) {
   }
 
@@ -43,6 +45,10 @@ export class UserListComponent implements OnInit {
 
   public deleteUser(user: User) {
     this.userService.delete(user).subscribe( (response : any) => { this.users = this.users.filter( (u: User) => u.id != user.id ) } );
+  }
+
+  public subscribeMe() {
+    this.actionCable.subscribeMe();
   }
 
 }

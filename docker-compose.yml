@@ -1,22 +1,28 @@
-version: '3'
+version: "3"
 services:
   api:
     container_name: certain-ice-api
     build: ./certain-ice-api
     ports:
       - "3000:3000"
+      - "3334:3334"
     volumes:
       - ./certain-ice-api:/api
     depends_on:
       - dev-db
+      - certain-ice-redis
     environment:
-      RAILS_ENV: 'development'
-      DEV_DB_DATABASE: 'certain-ice-dev'
+      RAILS_ENV: "development"
+      DEV_DB_DATABASE: "certain-ice-dev"
       DEV_DB_USERNAME: dfire
       DEV_DB_PASSWORD: pwd
       DEV_DB_HOST: certain-ice-dev-db
-    command:
-      rails s -b 0.0.0.0
+    command: rails s -b 0.0.0.0
+  redis:
+    container_name: certain-ice-redis
+    image: redis
+    ports:
+      - "6379:6379"
   ui:
     container_name: certain-ice-ui
     build: ./certain-ice-ui
@@ -27,8 +33,7 @@ services:
       - /certain-ice-ui/node_modules
     depends_on:
       - certain-ice-api
-    command:
-      npm start
+    command: npm start
   dev-db:
     container_name: certain-ice-dev-db
     image: mariadb
@@ -39,4 +44,3 @@ services:
       MYSQL_PASSWORD: pwd
     volumes:
       - ./data/database:/var/lib/mysql
-    
