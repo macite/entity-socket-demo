@@ -2,7 +2,7 @@ import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { User } from "src/app/model/user";
 import { UserService } from "src/app/model/user.service";
-import { ActionCableService } from "src/app/model/actioncable.service";
+// import { ActionCableService } from "src/app/model/actioncable.service";
 
 @Component({
   selector: 'user-list',
@@ -14,7 +14,7 @@ export class UserListComponent implements OnInit {
 
   constructor(
     private userService: UserService,
-    private actionCable: ActionCableService
+    // private actionCable: ActionCableService
   ) {
   }
 
@@ -47,8 +47,8 @@ export class UserListComponent implements OnInit {
     this.userService.delete(user).subscribe( (response : any) => { this.users = this.users.filter( (u: User) => u.id != user.id ) } );
   }
 
-  public subscribeMe() {
-    this.actionCable.subscribeMe();
-  }
+  // public subscribeMe() {
+  //   this.actionCable.subscribeMe();
+  // }
 
 }
