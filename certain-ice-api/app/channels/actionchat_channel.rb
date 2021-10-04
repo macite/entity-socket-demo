@@ -23,7 +23,7 @@ class ActionchatChannel < ApplicationCable::Channel
   
   def receive(message)
     ActionCable.server.broadcast("actionchat_channel", {message: message})
-  end
+    end
   
   def unsubscribed
     # Any cleanup needed when channel is unsubscribed

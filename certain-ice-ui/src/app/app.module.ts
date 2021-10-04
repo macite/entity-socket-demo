@@ -9,13 +9,13 @@ import { MessageService } from './model/message.service';
 
 import { UserListComponent } from './components/user-list/user-list.component';
 import { MessageListComponent } from './components/message-list/message-list.component';
+// import { ActionCableService } from './model/actioncable.service';
 
-// import {ActionCableService} from './model/actioncable.service';
 @NgModule({
   declarations: [
     AppComponent,
     UserListComponent,
-    MessageListComponent
+    MessageListComponent,
   ],
   imports: [
     BrowserModule,
