@@ -61,6 +61,7 @@ export class MessageListComponent implements OnInit {
         this.msgCount = messages.length;
         this.messages.push(...messages);
       }
+      this.sender = false;
     });
   }
 
