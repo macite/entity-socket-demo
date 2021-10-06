@@ -17,6 +17,7 @@ export class MessageListComponent implements OnInit {
   // private subscription: ActionCable.Channel.ActionchatChannel;
   public channel: any;
   public msgCount = 0;
+  public sender = false;
   constructor(public messageService: MessageService) {}
 
   ngOnInit() {
@@ -38,9 +39,7 @@ export class MessageListComponent implements OnInit {
     this.messageService.query().subscribe((messages: Message[]) => {
       this.msgCount = messages.length;
       console.log("### Run first time only! #### Message length: ", messages.length, " MessageCount: ", this.msgCount);
-      this.messageService.query().subscribe((messages: Message[]) => {
-        this.messages.push(...messages);
-      });
+      this.messages.push(...messages);
     });
   }
 
@@ -58,7 +57,7 @@ export class MessageListComponent implements OnInit {
   public retrieveMessages(): void {
     this.messageService.query().subscribe((messages: Message[]) => {
       console.log("Retrieve called. Message length: ", messages.length, " MessageCount: ", this.msgCount);
-      if (messages.length > this.msgCount || messages.length < this.msgCount) {
+      if (messages.length != this.msgCount && this.sender == false ) {
         this.msgCount = messages.length;
         this.messages.push(...messages);
       }
@@ -66,6 +65,7 @@ export class MessageListComponent implements OnInit {
   }
 
   public sendMessage(data: string) {
+    this.sender = true;
     this.channel.send({ message: data });
     this.addMessage(data);
   }
