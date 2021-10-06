@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Message } from 'src/app/model/message';
 import { MessageService } from 'src/app/model/message.service';
 import * as ActionCable from 'actioncable';
-import { CachedEntityService } from 'src/app/model/cached-entity.service'; 
+import { CachedEntityService } from 'src/app/model/cached-entity.service';
 
 @Component({
   selector: 'message-list',
@@ -13,13 +13,34 @@ import { CachedEntityService } from 'src/app/model/cached-entity.service';
 export class MessageListComponent implements OnInit {
   messages: Message[] = new Array<Message>();
   private consumer: any;
-  public cachedEntity: set
-
+  // private cable: ActionCable.Cable;
+  // private subscription: ActionCable.Channel.ActionchatChannel;
+  public channel: any;
+  public msgCount = 0;
   constructor(public messageService: MessageService) {}
 
   ngOnInit() {
+    this.consumer = ActionCable.createConsumer(`ws://localhost:3000/cable`);
+    this.channel = this.consumer.subscriptions.create('ActionchatChannel', {
+      connected() {
+        console.log('Channel subscribed on page load!', this.channel);
+      },
+      disconnected() {
+        // console.log('Service terminated by WB server');
+      },
+      received: () => this.retrieveMessages(),
+    });
+    // This is no longer being used because the above gets called everytime the page is updated - thereby calling retrieve
+    // this.retrieveMessages();
+  }
+
+  ngAfterViewInit() {
     this.messageService.query().subscribe((messages: Message[]) => {
-      this.messages.push(...messages);
+      this.msgCount = messages.length;
+      console.log("### Run first time only! #### Message length: ", messages.length, " MessageCount: ", this.msgCount);
+      this.messageService.query().subscribe((messages: Message[]) => {
+        this.messages.push(...messages);
+      });
     });
   }
 
@@ -27,8 +48,6 @@ export class MessageListComponent implements OnInit {
     const data = {
       content: content,
     };
-    // let u: message = this.messages[0];
-    // this.messageService.put<message>(u).subscribe( (message: message) => {console.log(message)} );
     this.messageService
       .create(undefined, data)
       .subscribe((message: Message) => {
@@ -36,28 +55,19 @@ export class MessageListComponent implements OnInit {
       });
   }
 
-  public subscribeMe(data: string) {
-    let newMsg = { content: data };
-    this.consumer = ActionCable.createConsumer(`ws://localhost:3000/cable`);
-    console.log('Trying connection');
-    const channel = this.consumer.subscriptions.create('ActionchatChannel', {
-      connected() {
-        console.log('Subscription is ready for use');
-        console.log(channel);
-        channel.send({ message: data });
-      },
-      disconnected() {
-        console.log('Service terminated by WB server');
-      },
-      received(message: any) {
-        console.log('This is the data received: ', message);
-      },
+  public retrieveMessages(): void {
+    this.messageService.query().subscribe((messages: Message[]) => {
+      console.log("Retrieve called. Message length: ", messages.length, " MessageCount: ", this.msgCount);
+      if (messages.length > this.msgCount || messages.length < this.msgCount) {
+        this.msgCount = messages.length;
+        this.messages.push(...messages);
+      }
     });
-    this.messageService
-      .create(undefined, newMsg)
-      .subscribe((message: Message) => {
-        this.messages.push(message);
-      });
+  }
+
+  public sendMessage(data: string) {
+    this.channel.send({ message: data });
+    this.addMessage(data);
   }
 
   public deleteMessage(message: Message) {
