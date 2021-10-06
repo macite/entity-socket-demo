@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Message } from 'src/app/model/message';
 import { MessageService } from 'src/app/model/message.service';
 import * as ActionCable from 'actioncable';
+import { CachedEntityService } from 'src/app/model/cached-entity.service'; 
 
 @Component({
   selector: 'message-list',
@@ -12,6 +13,7 @@ import * as ActionCable from 'actioncable';
 export class MessageListComponent implements OnInit {
   messages: Message[] = new Array<Message>();
   private consumer: any;
+  public cachedEntity: set
 
   constructor(public messageService: MessageService) {}
 
