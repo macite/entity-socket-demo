@@ -2,7 +2,6 @@ import { Entity } from './entity';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import API_URL from './apiURL';
 import { Injectable } from '@angular/core';
 
 export interface HttpOptions {
@@ -31,7 +30,6 @@ export interface HttpOptions {
  * This is used to interact with the server, and create Entity objects that are returned for
  * use within the application.
  */
-@Injectable()
 export abstract class EntityService<T extends Entity> {
   /**
    * Provide a string template for the endpoint URLs in the format
@@ -45,15 +43,21 @@ export abstract class EntityService<T extends Entity> {
    */
   protected abstract readonly endpointFormat: string;
 
-  abstract entityName: string;
-  get serverKey(): string {
-    return this.entityName
-      .replace(/(.)([A-Z][a-z]+)/, '$1_$2')
-      .replace(/([a-z0-9])([A-Z])/, '$1_$2')
-      .toLowerCase();
-  }
+  /**
+   * The base url of the api associated with this entity service.
+   */
+  protected apiUrl: string;
 
-  constructor(private httpClient: HttpClient) {}
+  /**
+   * Construct the EntityService with the passed in HttpClient and apiUrl. This should be the
+   * base class for a Angular service.
+   *
+   * @param httpClient the reference to the http client used to make http requests.
+   * @param apiUrl the base url
+   */
+  constructor(private httpClient: HttpClient, apiUrl: string) {
+    this.apiUrl = apiUrl;
+  }
 
   /**
    * Helper function to convert end point format strings to final path
@@ -62,7 +66,7 @@ export abstract class EntityService<T extends Entity> {
    * @param object the object to get id values from for the placeholder.
    * @returns {string} The endpoint.
    */
-  private buildEndpoint(path: string, object?: object): string {
+  protected buildEndpoint(path: string, object?: object): string {
     // Replace any keys with provided values
     if (object) {
       for (const key in object) {
@@ -75,7 +79,9 @@ export abstract class EntityService<T extends Entity> {
 
     // Strip any missed keys
     path = path.replace(/:[\w-]*?:/, '');
-    return `${API_URL}/${path}`;
+    return `${this.apiUrl}/${path}`;
+  }
+
   }
 
   /**
