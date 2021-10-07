@@ -45,7 +45,15 @@ class UsersApi < Grape::API
     true
   end
 
+  params do
+    optional :filter, type: String, desc: 'Limit response to those users starting with this filter'
+  end
   get '/users' do
-    User.all
+    filter = params[:filter]
+    if filter.nil?
+      User.all
+    else
+      User.where('name LIKE ?', "#{filter}%")
+    end
   end
 end
