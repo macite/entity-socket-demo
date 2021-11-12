@@ -1,7 +1,8 @@
 import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
-import { User } from "../user";
-import { UserService } from "../user.service";
+import { RequestOptions } from "dist/ngx-entity-service/lib/request-options";
+import { User } from "src/app/model/user";
+import { UserService } from "src/app/model/user.service";
 
 @Component({
   selector: 'user-list',
@@ -17,8 +18,26 @@ export class UserListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.userService.query().subscribe(
+    this.refreshData();
+  }
+
+  public refreshData(value?: string, all: boolean = false) {
+    let params : RequestOptions<User> = {};
+    if (value) {
+      params = {
+        params : {
+         'filter' : value
+        }
+     }
+    }
+
+    if (all) {
+      params.onCacheHitReturn = 'all';
+    }
+
+    this.userService.fetchAll(undefined, params).subscribe(
       (users: User[]) => {
+        this.users.length = 0;
         this.users.push(...users);
       }
     );
@@ -26,7 +45,6 @@ export class UserListComponent implements OnInit {
 
   public addUser(username: string, name: string, password: string) {
     const data = {
-      id: 1,
       username: username,
       name: name,
       password: password
@@ -34,7 +52,7 @@ export class UserListComponent implements OnInit {
 
     // let u: User = this.users[0];
     // this.userService.put<User>(u).subscribe( (user: User) => {console.log(user)} );
-    this.userService.create(undefined, data ).subscribe(
+    this.userService.create(data).subscribe(
       (user: User) => {
         this.users.push(user);
       }
@@ -42,7 +60,7 @@ export class UserListComponent implements OnInit {
   }
 
   public deleteUser(user: User) {
-    this.userService.delete(user).subscribe( (response) => { this.users = this.users.filter( (u: User) => u.id != user.id ) } );
+    this.userService.delete(user).subscribe( (response : any) => { this.users = this.users.filter( (u: User) => u.id != user.id ) } );
   }
 
 }

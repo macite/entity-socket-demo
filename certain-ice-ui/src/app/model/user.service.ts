@@ -1,17 +1,18 @@
 import { User } from './user';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EntityService } from './entity.service';
+import { CachedEntityService } from 'ngx-entity-service';
+import API_URL from './apiURL';
 
 @Injectable()
-export class UserService extends EntityService<User> {
-  entityName: string = 'User';
+export class UserService extends CachedEntityService<User> {
   protected readonly endpointFormat = 'users/:id:';
 
   constructor(
     httpClient: HttpClient,
   ) {
-    super(httpClient);
+    super(httpClient, API_URL);
+    this.cache.cacheExpiryMilliseconds = 60 * 1000;
   }
 
   protected createInstanceFrom(json: any, other?: any): User {

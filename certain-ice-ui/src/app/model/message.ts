@@ -1,19 +1,15 @@
 import { IterableChangeRecord } from '@angular/core';
-import { Entity } from 'ngx-entity-service';
+import { Entity } from './entity';
 
 const KEYS =
   [
     'id',
-    'username',
-    'name',
-    'password'
+    'content'
   ];
 
-export class User extends Entity {
+export class Message extends Entity {
   id: number = -1;
-  username: string = '';
-  name: string = '';
-  password: string = '';
+  content: string = '';
 
   /**
    * Convert entity to json - used on put/post
@@ -35,10 +31,10 @@ export class User extends Entity {
   }
 
   public get key(): string {
-    return this.username.toString();
+    return this.id.toString();
   }
 
   public keyForJson(json: any): string {
-    return json.username;
+    return json.id;
   }
 }

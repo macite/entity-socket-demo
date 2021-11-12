@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "cli": {
+    "analytics": "2c9259f9-8a2b-438d-acd6-e58cc2a810ce"
+  },
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
@@ -97,6 +100,37 @@
               "src/styles.css"
             ],
             "scripts": []
+          }
+        }
+      }
+    },
+    "ngx-entity-service": {
+      "projectType": "library",
+      "root": "projects/ngx-entity-service",
+      "sourceRoot": "projects/ngx-entity-service/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/ngx-entity-service/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-entity-service/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-entity-service/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ngx-entity-service/src/test.ts",
+            "tsConfig": "projects/ngx-entity-service/tsconfig.spec.json",
+            "karmaConfig": "projects/ngx-entity-service/karma.conf.js"
           }
         }
       }
