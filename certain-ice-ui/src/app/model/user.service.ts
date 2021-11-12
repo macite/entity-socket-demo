@@ -12,6 +12,7 @@ export class UserService extends CachedEntityService<User> {
     httpClient: HttpClient,
   ) {
     super(httpClient, API_URL);
+    this.cache.cacheExpiryMilliseconds = 60 * 1000;
   }
 
   protected createInstanceFrom(json: any, other?: any): User {

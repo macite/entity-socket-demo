@@ -1,32 +1,34 @@
-import { EntityService, HttpOptions } from './entity.service';
+import { EntityService } from './entity.service';
 import { Entity } from './entity';
 import { Observable } from 'rxjs';
 import { tap, map } from 'rxjs/operators';
-import { Injectable } from '@angular/core';
+import { EntityCache } from './entity-cache';
+import { RequestOptions } from './request-options';
+import { HttpParams, HttpParamsOptions } from '@angular/common/http';
 
 /**
  * The CachedEntityService provides wraps the EntityService and provides a cache that stores
  * previously fetched entity objects from the server. Objects within the cache are updated when
  * new values are fetched from the server.
  */
-@Injectable()
 export abstract class CachedEntityService<T extends Entity> extends EntityService<T> {
-  private globalCache: Map<string, T> = new Map<string, T>();
-  private cache: Map<string, T> = this.globalCache;
+  private globalCache: EntityCache<T> = new EntityCache<T>();
 
   /**
-   * This allows you to specify the source of a cache, which may change from a global source to
-   * a cache contained within another entity (for example, a cache of comments in a task).
+   * Retrieve the cache object to use for the request.
    *
-   * @param source  the new source to be used for the cache. The global cache will be used if
-   *                this is null or undefined.
+   * @param options The options of the request.
+   * @returns The cache object to use.
    */
-  public set cacheSource(source: Map<string, T>) {
-    if (source) {
-      this.cache = source;
-    } else {
-      this.cache = this.globalCache;
-    }
+  private cacheFor(options?: RequestOptions<T>) : EntityCache<T> {
+    return options?.cache || this.globalCache;
+  }
+
+  /**
+   * Access the global entity cache.
+   */
+  public get cache(): EntityCache<T> {
+    return this.globalCache;
   }
 
   /**
@@ -37,7 +39,7 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    * @returns       a unique key to identify the associated entity
    */
   private keyFromPathIds(pathIds: any): string {
-    if (pathIds.key) {
+    if (pathIds?.key) {
       return pathIds.key;
     } else if (typeof pathIds === 'object') {
       return pathIds['id'].toString();
@@ -48,37 +50,57 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
     }
   }
 
+  private queryKey(pathIds: any, options?: RequestOptions<T>): string {
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, pathIds);
+    const params = options?.params ? new HttpParams({fromObject: options?.params} as HttpParamsOptions) : undefined;
+    return path + params?.toString();
+  }
+
   /**
    * Make an update request to the endpoint, using the supplied object to identify which id to update.
    * If updated, the cache is updated ot set with the entity.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
-   * @param options Optional http options
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public update(pathIds: object | T, obj?: T, options?: HttpOptions): Observable<T>;
-  public update(pathIds: any, obj?: T, options?: HttpOptions): Observable<T> {
+  public update(pathIds: object | T, options?: RequestOptions<T>): Observable<T>;
+  public update(pathIds: any, options?: RequestOptions<T>): Observable<T> {
+    const cache = this.cacheFor(options);
     return super
-      .update(pathIds, obj, options)
-      .pipe(tap((updatedEntity) => this.addEntityToCache(updatedEntity.key, updatedEntity)));
+      .update(pathIds, options)
+      .pipe(tap((updatedEntity) => cache.set(updatedEntity.key, updatedEntity)));
   }
+
   /**
    * Make a query request (get all) to the end point, using the supplied parameters to determine path.
-   * Caches all returned entities
+   * Caches all returned entities.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
-   * @param other   Any other data that is needed to be passed to the creation of entities
-   *                resulting from this get request.
-   * @param options Optional http options
-   * @returns {Observable} a new cold observable
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
+   * @returns {Observable} an observable through which the response will be returned when complete
    */
-  public query(pathIds?: object, other?: object, options?: HttpOptions): Observable<T[]> {
-    return super.query(pathIds, other, options).pipe(
-      tap((entityList) => {
-        entityList.forEach((entity) => {
-          this.addEntityToCache(entity.key, entity);
-        });
-      })
-    );
+   public fetchAll(pathIds?: object, options?: RequestOptions<T>): Observable<T[]> {
+    const cache = this.cacheFor(options);
+    const queryKey = this.queryKey(pathIds, options);
+    if (cache.ranQuery(queryKey) ) {
+      return cache.observerFor(queryKey, options);
+    } else {
+      return this.query(pathIds, options);
+    }
+  }
+
+  /**
+   * Make a query request (get all) to the end point, using the supplied parameters to determine path.
+   * Caches all returned entities. This will **not** read Entities from the cache, instead you should
+   * use `fetchAll` to query from the cache where possible.
+   *
+   * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
+   * @returns {Observable} an observable through which the response will be returned when complete
+   */
+  public query(pathIds?: object, options?: RequestOptions<T>): Observable<T[]> {
+    const cache = this.cacheFor(options);
+    return cache.registerQuery(this.queryKey(pathIds, options), super.query(pathIds, options));
   }
 
   /**
@@ -88,21 +110,19 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    *
    * @param pathIds Either the id, if a number and maps simple to ':id', otherwise an object
    *                with keys the match the placeholders within the endpointFormat string.
-   * @param other   Any other data that is needed to be passed to the creation of entities
-   *                resulting from this get request.
-   * @param options Optional http options
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public fetch(pathIds: number | string | Entity | object, other?: any, options?: HttpOptions): Observable<T>;
-  public fetch(pathIds: any, other?: any, options?: HttpOptions): Observable<T> {
-    const key: string = this.keyFromPathIds(pathIds);
-    return super.get(pathIds, other, options).pipe(
+  public fetch(pathIds: number | string | Entity | object, options?: RequestOptions<T>): Observable<T>;
+  public fetch(pathIds: any, options?: RequestOptions<T>): Observable<T> {
+    const cache = this.cacheFor(options);
+    return super.get(pathIds, options).pipe(
       map((entity: T) => {
-        if (this.hasEntityInCache(key)) {
-          const cachedEntity = this.cache.get(key);
+        if (cache.has(entity.key)) {
+          const cachedEntity = cache.get(entity.key);
           Object.assign(cachedEntity, entity);
           return cachedEntity as T;
         } else {
-          this.addEntityToCache(key, entity);
+          cache.set(entity.key, entity);
           return entity;
         }
       })
@@ -110,53 +130,22 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
   }
 
   /**
-   * Checks if an entity exists for a given key within the current cache.
-   *
-   * @param key Key of entity to check for.
-   * @returns true if the entity with key is in the cache
-   */
-  public hasEntityInCache(key: string): boolean {
-    return this.cache.has(key);
-  }
-
-  /**
-   * Store an entity in the cache - this will automatically be called on
-   * query and get, but can be called directly in special cases.
-   *
-   * @param key key of the entity to store
-   * @param entity the entity object to store in the cache
-   */
-  public addEntityToCache(key: string, entity: T) {
-    this.cache.set(key, entity);
-  }
-
-  /**
-   * Read a given entity from the cache without interaction with the server.
-   *
-   * @param key key of entity to read from cache
-   */
-  public getFromCache(key: string): T {
-    return this.cache.get(key) as T;
-  }
-
-  /**
    * First, tries to retrieve from cache, the object with the id, or id field from the pathIds.
    * If found, return the item from cache, otherwise make a get request to the end point,
    * using the supplied parameters to determine path. Caches the returned object
    *
    * @param pathIds Either the id, if a number and maps simple to ':id', otherwise an object
    *                with keys the match the placeholders within the endpointFormat string.
-   * @param other   Any other data that is needed to be passed to the creation of entities
-   *                resulting from this get request.
-   * @param options Optional http options
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public get(pathIds: number | string | object, other?: any, options?: HttpOptions): Observable<T>;
-  public get(pathIds: any, other?: any, options?: HttpOptions): Observable<T> {
+  public get(pathIds: number | string | object, options?: RequestOptions<T>): Observable<T>;
+  public get(pathIds: any, options?: RequestOptions<T>): Observable<T> {
     const key: string = this.keyFromPathIds(pathIds);
-    if (this.cache.has(key)) {
-      return new Observable((observer: any) => observer.next(this.getFromCache(key)));
+    const cache = this.cacheFor(options);
+    if (cache.has(key)) {
+      return new Observable((observer: any) => observer.next(cache.get(key)));
     } else {
-      return super.get(pathIds, other, options).pipe(tap((entity: T) => this.addEntityToCache(entity.key, entity)));
+      return super.get(pathIds, options).pipe(tap((entity: T) => cache.set(entity.key, entity)));
     }
   }
 
@@ -165,13 +154,12 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    * The results of the request are cached using the key of the entity.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
-   * @param data    A FormData or object with the values to pass up in the body of the update/put request.
-   * @param other   Any other data needed to be passed to the entity on creation
-   * @param options Optional http options
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    * @returns {Observable} a new cold observable with the newly created @type {T}
    */
-  public create(pathIds?: object, data?: FormData | object, other?: any, options?: HttpOptions): Observable<T> {
-    return super.create(pathIds, data, other, options).pipe(tap((entity) => this.addEntityToCache(entity.key, entity)));
+  public create(pathIds?: object, options?: RequestOptions<T>): Observable<T> {
+    const cache = this.cacheFor(options);
+    return super.create(pathIds, options).pipe(tap((entity) => cache.set(entity.key, entity)));
   }
 
   /**
@@ -182,11 +170,10 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    *                with keys the match the placeholders within the endpointFormat string.
    * @param options Optional http options
    */
-  public delete(pathIds: number | object, options?: HttpOptions): Observable<object>;
-  public delete(pathIds: any, options?: HttpOptions): Observable<object> {
+  public delete(pathIds: number | object, options?: RequestOptions<T>): Observable<object>;
+  public delete(pathIds: any, options?: RequestOptions<T>): Observable<object> {
     const key: string = this.keyFromPathIds(pathIds);
-
-    const cache = this.cache;
+    const cache = this.cacheFor(options);
 
     return super.delete(pathIds, options).pipe(
       // Tap performs a side effect on Observable, but return it identical to the source.

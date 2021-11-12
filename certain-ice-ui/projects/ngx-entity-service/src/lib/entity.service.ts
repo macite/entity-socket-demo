@@ -3,27 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-
-export interface HttpOptions {
-  headers?:
-    | HttpHeaders
-    | {
-        [header: string]: string | string[];
-      };
-  observe?: 'body';
-  params?:
-    | HttpParams
-    | {
-        [param: string]: string | string[];
-      };
-  reportProgress?: boolean;
-  responseType?: 'json';
-  withCredentials?: boolean;
-  /**
-   * Use the alternate end point format to override the end point used.
-   */
-  alternateEndpointFormat?: string;
-}
+import { RequestOptions } from './request-options';
 
 /**
  * ResourceService, responsible for the CRUD actions for all resources which inherit form it.
@@ -39,6 +19,7 @@ export abstract class EntityService<T extends Entity> {
    * Use :id for simple cases eg: 'users/:id:'. This can then be shortcut to provide just the
    * value without needing to indicate the key to replace. eg UserService.get(1) instead of
    * UserService.get({id: 1}])
+   *
    * @returns {string} The endpoint string format
    */
   protected abstract readonly endpointFormat: string;
@@ -82,6 +63,15 @@ export abstract class EntityService<T extends Entity> {
     return `${this.apiUrl}/${path}`;
   }
 
+  /**
+   * Get the body for this request.
+   *
+   * @param pathIds the pathIds for the request
+   * @param options the request options
+   * @returns the body to use for the http request
+   */
+  private bodyFor(pathIds: object | T | any, options?: RequestOptions<T>): FormData | object | undefined {
+    return options?.body || options?.entity?.toJson() ||  typeof pathIds.toJson === 'function' ? pathIds.toJson() : pathIds;
   }
 
   /**
@@ -96,51 +86,53 @@ export abstract class EntityService<T extends Entity> {
    *
    * @param pathIds Either the id, if a number and maps simple to ':id', otherwise an object
    *                with keys the match the placeholders within the endpointFormat string.
-   * @param other   Any other data that is needed to be passed to the creation of entities
-   *                resulting from this get request.
-   * @param options Optional http options
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public get(pathIds: number | object, other?: any, options?: HttpOptions): Observable<T>;
-  public get(pathIds: any, other?: any, options?: HttpOptions): Observable<T> {
+  public get(pathIds: number | object, options?: RequestOptions<T>): Observable<T>;
+  public get(pathIds: any, options?: RequestOptions<T>): Observable<T> {
     const object = { ...pathIds };
     if (typeof pathIds === 'number') {
       object['id'] = pathIds;
     }
-    const path = this.buildEndpoint(options?.alternateEndpointFormat || this.endpointFormat, object);
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
 
-    return this.httpClient.get(path, options).pipe(map((rawData) => this.createInstanceFrom(rawData, other))); // Turn the raw JSON returned into the object T
+    return this.httpClient.get(path, options).pipe(map((rawData) => this.createInstanceFrom(rawData, options?.constructorParams))); // Turn the raw JSON returned into the object T
   }
 
   /**
    * Make a query request (get all) to the end point, using the supplied parameters to determine path.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
-   * @param other   Any other data that is needed to be passed to the creation of entities
-   *                resulting from this get request.
-   * @param options Optional http options
-   * @returns {Observable} a new cold observable
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
+   * @returns {Observable} which will be used to pass the resulting entity objects when the response is processed.
    */
-  public query(pathIds?: object, other?: object, options?: HttpOptions): Observable<T[]> {
-    const path = this.buildEndpoint(options?.alternateEndpointFormat || this.endpointFormat, pathIds);
+  public query(pathIds?: object, options?: RequestOptions<T>): Observable<T[]> {
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, pathIds);
     return this.httpClient
       .get(path, options)
-      .pipe(map((rawData) => this.convertCollection(rawData instanceof Array ? rawData : [rawData], other)));
+      .pipe(map((rawData) => this.convertCollection(rawData instanceof Array ? rawData : [rawData], options?.constructorParams)));
   }
 
   /**
    * Make an update request to the endpoint, using the supplied object to identify which id to update.
    *
-   * @param obj An object with keys which match the placeholders within the endpointFormat string.
-   * @param options Optional http options
+   * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public update(pathIds: object | T, obj?: T, options?: HttpOptions): Observable<T>;
-  public update(pathIds: any, obj?: T, options?: HttpOptions): Observable<T> {
-    let entity: T;
-    if (obj === undefined) entity = pathIds as T;
-    else entity = obj;
+  public update(pathIds: object | T, options?: RequestOptions<T>): Observable<T>;
+  public update(pathIds: any, options?: RequestOptions<T>): Observable<T> {
+    // ensure that body is defined in options
+    if (options === undefined) {
+      options = {};
+    }
+
+    options.body = this.bodyFor(pathIds, options);
+
+    // locate the entity in the request
+    const entity: T = options.entity || pathIds as T;
 
     // need to pass object through as path id and form data
-    return this.put<T>(pathIds, entity.toJson(), options).pipe(
+    return this.put<T>(pathIds, options).pipe(
       map((rawData) => {
         entity.updateFromJson(rawData);
         return entity;
@@ -150,18 +142,18 @@ export abstract class EntityService<T extends Entity> {
 
   /**
    * Make an put request to the endpoint, indicating the type of data to be returned from the endpoint.
-   * The supplied object identifies the endpoint url and data.
+   * pathIds is used together with the endpointFormat to determine the path for the request. The body comes
+   * from `options.body`, from calling `pathIds.toJson()`, or directly passing pathIds (in that order).
    *
    * @typeparam S The type of the data to be returned
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
-   * @param data    A FormData or object with the values to pass up in the body of the update/put request.
-   * @param options Optional http options
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public put<S>(pathIds: object, data?: FormData | object, options?: HttpOptions): Observable<S>;
-  public put<S>(pathIds: any, data?: FormData | object, options?: HttpOptions): Observable<S> {
+  public put<S>(pathIds: object, options?: RequestOptions<T>): Observable<S>;
+  public put<S>(pathIds: any, options?: RequestOptions<T>): Observable<S> {
     const object = { ...pathIds };
-    const json = data ? data : typeof pathIds.toJson === 'function' ? pathIds.toJson() : pathIds;
-    const path = this.buildEndpoint(options?.alternateEndpointFormat || this.endpointFormat, object);
+    const json = this.bodyFor(pathIds, options);
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
 
     return this.httpClient.put(path, json, options) as Observable<S>;
   }
@@ -170,17 +162,15 @@ export abstract class EntityService<T extends Entity> {
    * Make a create request to the endpoint, using the supplied parameters to determine the path.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
-   * @param data    A FormData or object with the values to pass up in the body of the create request.
-   * @param other   Any other data needed to be passed to the entity on creation
-   * @param options Optional http options
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    * @returns {Observable} a new cold observable with the newly created @type {T}
    */
-  public create(pathIds?: object, data?: FormData | object, other?: any, options?: HttpOptions): Observable<T>;
-  public create(pathIds?: any, data?: FormData | object, other?: any, options?: HttpOptions): Observable<T> {
+  public create(pathIds?: object, options?: RequestOptions<T>): Observable<T>;
+  public create(pathIds?: any, options?: RequestOptions<T>): Observable<T> {
     const object = { ...pathIds };
-    const json = data ? data : typeof pathIds.toJson === 'function' ? pathIds.toJson() : pathIds;
-    const path = this.buildEndpoint(options?.alternateEndpointFormat || this.endpointFormat, object);
-    return this.httpClient.post(path, json, options).pipe(map((rawData) => this.createInstanceFrom(rawData, other)));
+    const json = this.bodyFor(pathIds, options);
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
+    return this.httpClient.post(path, json, options).pipe(map((rawData) => this.createInstanceFrom(rawData, options?.constructorParams)));
   }
 
   /**
@@ -190,13 +180,13 @@ export abstract class EntityService<T extends Entity> {
    *                with keys the match the placeholders within the endpointFormat string.
    * @param options Optional http options
    */
-  public delete(pathIds: number | object, options?: HttpOptions): Observable<object>;
-  public delete(pathIds: any, options?: HttpOptions): Observable<object> {
+  public delete(pathIds: number | object, options?: RequestOptions<T>): Observable<object>;
+  public delete(pathIds: any, options?: RequestOptions<T>): Observable<object> {
     const object = { ...pathIds };
     if (typeof pathIds === 'number') {
       object['id'] = pathIds;
     }
-    const path = this.buildEndpoint(options?.alternateEndpointFormat || this.endpointFormat, object);
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
 
     return this.httpClient.delete(path, options);
   }

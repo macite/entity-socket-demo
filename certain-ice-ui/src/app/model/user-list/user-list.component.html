@@ -19,4 +19,10 @@
   <input type="password" id="password-input" #password>
   <button (click)="addUser(username.value, name.value, password.value)">Add User</button>
 
+  <button (click)="refreshData()">Refresh</button>
+
+  <button (click)="refreshData('a')">Refresh start a</button>
+
+  <button (click)="refreshData('a', true)">Refresh start a - all</button>
+
 </div>
