@@ -38,6 +38,7 @@ class CertainIceApi < Grape::API
   end
 
   mount UsersApi
+  mount MessageApi
 
   add_swagger_documentation \
     base_path: nil,

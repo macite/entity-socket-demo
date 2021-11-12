@@ -1,8 +1,8 @@
 import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { RequestOptions } from "dist/ngx-entity-service/lib/request-options";
-import { User } from "../user";
-import { UserService } from "../user.service";
+import { User } from "src/app/model/user";
+import { UserService } from "src/app/model/user.service";
 
 @Component({
   selector: 'user-list',
@@ -60,7 +60,7 @@ export class UserListComponent implements OnInit {
   }
 
   public deleteUser(user: User) {
-    this.userService.delete(user).subscribe( (response) => { this.users = this.users.filter( (u: User) => u.id != user.id ) } );
+    this.userService.delete(user).subscribe( (response : any) => { this.users = this.users.filter( (u: User) => u.id != user.id ) } );
   }
 
 }
