@@ -24,9 +24,8 @@ services:
       - "4200:4200"
     volumes:
       - ./certain-ice-ui:/certain-ice-ui
-      - /certain-ice-ui/node_modules
     depends_on:
-      - certain-ice-api
+      - api
     command:
       npm start
   dev-db:
