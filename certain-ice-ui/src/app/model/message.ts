@@ -1,5 +1,4 @@
-import { IterableChangeRecord } from '@angular/core';
-import { Entity } from './entity';
+import { Entity } from 'ngx-entity-service';
 
 const KEYS =
   [
