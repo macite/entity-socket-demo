@@ -14,7 +14,13 @@ class QueryData<T> {
     this.response = data;
   }
 
-  public get hasExpired() {
+  /**
+   * Indicates if this query response data has passed its
+   * cache duration.
+   *
+   * @returns false if the query data is still valid to use.
+   */
+  public get hasExpired() : boolean {
     // Using get time here for clarity...
     // The Query has expired if the current time is larger than the expire at time
     return new Date().getTime() > this.expireAt.getTime();
@@ -66,6 +72,12 @@ export class EntityCache<T extends Entity> {
     );
   }
 
+  /**
+   * Has this query been run already?
+   *
+   * @param pathKey the query path
+   * @returns true if the query has been run, and has not expired.
+   */
   public ranQuery(pathKey: string) {
     if ( this.queryKeys.has(pathKey) ) {
       const data : QueryData<T> | undefined = this.queryKeys.get(pathKey);
@@ -79,6 +91,16 @@ export class EntityCache<T extends Entity> {
     }
   }
 
+  /**
+   * Creates a observable response for a value in the cache.
+   *
+   * This uses `onCacheHitReturn` to determine if all objects from the cache are returned, or only those that were in the
+   * original query. By default, all are returned if there are no query parameters in the original request (eg. /api/campus vs /api/campus?name=fred).
+   *
+   * @param queryKey the query
+   * @param options any options the accompany the query
+   * @returns an observer with the required objects
+   */
   public observerFor(queryKey: string, options?: RequestOptions<T>): Observable<T[]> {
     const data : QueryData<T> | undefined = this.queryKeys.get(queryKey);
     const cache = this.cache;
