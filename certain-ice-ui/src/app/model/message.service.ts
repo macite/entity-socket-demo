@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EntityService } from './entity.service';
+import { EntityService } from 'projects/ngx-entity-service/src/lib/entity.service';
 import { Message } from './message';
+import API_URL from './apiURL';
 
 @Injectable()
 export class MessageService extends EntityService<Message> {
@@ -11,7 +12,7 @@ export class MessageService extends EntityService<Message> {
   constructor(
     httpClient: HttpClient,
   ) {
-    super(httpClient);
+    super(httpClient, API_URL);
   }
 
   protected createInstanceFrom(json: any, other?: any): Message {

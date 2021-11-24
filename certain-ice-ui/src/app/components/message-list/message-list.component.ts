@@ -31,7 +31,7 @@ export class MessageListComponent implements OnInit {
 
     // let u: message = this.messages[0];
     // this.messageService.put<message>(u).subscribe( (message: message) => {console.log(message)} );
-    this.messageService.create(undefined, data ).subscribe(
+    this.messageService.create(data).subscribe(
       (message: Message) => {
         this.messages.push(message);
       }
