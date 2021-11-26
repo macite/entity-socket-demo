@@ -2,6 +2,7 @@ import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { Message } from "src/app/model/message";
 import { MessageService } from "src/app/model/message.service";
+import * as ActionCable from 'actioncable';
 
 @Component({
   selector: 'message-list',
@@ -10,6 +11,8 @@ import { MessageService } from "src/app/model/message.service";
 })
 export class MessageListComponent implements OnInit {
   messages: Message[] = new Array<Message>();
+  private consumer: any;
+  private channel: any;
 
   constructor(
     private messageService: MessageService
@@ -17,6 +20,20 @@ export class MessageListComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.consumer = ActionCable.createConsumer(`ws://localhost:3000/cable`);
+    this.channel = this.consumer.subscriptions.create('ChatChannel', {
+      connected() {
+        console.log("connected");
+      },
+      disconnected() {
+        console.log("disconnected");
+      },
+      received: (msgContent: any) => ( console.log(msgContent))
+    });
+    // received: (msgContent: any) => this.retrieveMessages(msgContent),
+  //   public retrieveMessages(msgContent: any) {
+  //     this.addMessage(msgContent);
+  // }
     this.messageService.query().subscribe(
       (messages: Message[]) => {
         this.messages.push(...messages);
