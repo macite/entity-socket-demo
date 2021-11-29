@@ -1,22 +1,30 @@
 module ApplicationCable
   class Connection < ActionCable::Connection::Base
-  identified_by : current_user
-  
-  def connect
-    self.current_user = find_verified_user
-  end
+    rescue_from StandardError, with: :report_error
+    # identified_by : current_user
+    
+    def connect
+      puts 'connecting - chat_channel'
+      # self.current_user = find_verified_user
+      ActionCable.server.broadcast("chat_channel", {type:'welcome', data:"user"})
+    end
 
-  def disconnect
-    ActionCable.server.broadcast("web_notification_channel", type:'alert', data:"#{current_user} disconnected")
-  end
+    def disconnect
+      puts 'disconnect - chat_channel'
+      ActionCable.server.broadcast("chat_channel", {type:'farewell', data:"user"})
+    end
 
-  private
+    private
+    def report_error(e)
+      puts e.inspect
+    end
+
     def find_verified_user
-      verified_user == env['warden'].user
-      verified_user
-      else
-        reject_unauthorized_connection
-      end
+      # verified_user == env['warden'].user
+      # verified_user
+      # else
+      #   reject_unauthorized_connection
+      # end
     end
   end
 end

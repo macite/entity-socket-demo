@@ -28,9 +28,14 @@ class CertainIceApi < Grape::API
       message = "Unable to find requested #{e.message[/(Couldn't find )(.*)( with)/,2]}"
       status = 404
     else
-      logger.error "Unhandled exception: #{e.class}"
-      logger.error e.inspect
-      logger.error e.backtrace.join("\n")
+      # logger.error "Unhandled exception: #{e.class}"
+      # logger.error e.inspect
+      # logger.error e.backtrace.join("\n")
+
+      puts "FAILING!"
+      puts e.inspect
+      puts e.backtrace.join("\n")
+
       message = "Sorry... something went wrong with your request."
       status = 500
     end

@@ -30,10 +30,7 @@ export class MessageListComponent implements OnInit {
       },
       received: (msgContent: any) => ( console.log(msgContent))
     });
-    // received: (msgContent: any) => this.retrieveMessages(msgContent),
-  //   public retrieveMessages(msgContent: any) {
-  //     this.addMessage(msgContent);
-  // }
+
     this.messageService.query().subscribe(
       (messages: Message[]) => {
         this.messages.push(...messages);
