@@ -14,10 +14,9 @@ class MessageApi < Grape::API
     message = Message.create!(message_parameters)
 
     if message.save
-      puts "sendng"
-      ActionCable.server.broadcast 'chat_channel', {content: message.content }
+      puts "broadcasting to chat_channel: #{message.content}"
+      ActionCable.server.broadcast('chat_channel', message.content)
     end
-
     message
   end
 

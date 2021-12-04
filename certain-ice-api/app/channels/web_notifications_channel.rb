@@ -1,6 +1,6 @@
 class WebNotificationChannel < ApplicationCable::Channel
 
-    def subscribe
+    def subscribed
         stream_from "web_notification_channel"
     end
 
