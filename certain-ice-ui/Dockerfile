@@ -1,17 +1,26 @@
 FROM node:14
 
 ENV DEBIAN_FRONTEND noninteractive
+ENV USER=node
+ENV NODE_ENV docker
 
-WORKDIR /certain-ice-ui
+# You can not use `${USER}` here, but reference `/home/node`.
+ENV PATH="/home/node/.npm-global/bin:${PATH}"
+# 👉 The `--global` install dir
+ENV NPM_CONFIG_PREFIX="/home/node/.npm-global"
 
 EXPOSE 4200
 
-ENV NODE_ENV docker
+USER "${USER}"
 
-# Install packages within the container
-COPY package.json package-lock.json /certain-ice-ui/
+# Pre-create the target dir for global install.
+RUN mkdir -p "${NPM_CONFIG_PREFIX}/lib"
 
-RUN npm install --save-dev @angular/cli@latest
-RUN npm install
+WORKDIR /certain-ice-ui
 
-CMD npm start
+# Install global packages
+RUN npm --global config set user "${USER}"
+RUN npm install -g angular-cli
+
+# Launch - install on launch so that node_modules are updated in volume
+CMD /bin/bash -c 'npm install; npm start'
