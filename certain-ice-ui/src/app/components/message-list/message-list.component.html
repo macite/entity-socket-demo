@@ -10,6 +10,13 @@
     <button class="btn btn-outline-secondary" type="button" id="button-addon2"
       (click)="addMessage(content.value)">Add</button>
   </div>
+  <div *ngIf="isEdit"class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Edit Content id : {{editdata.id}}</span>
+    <input type="text" class="form-control" [value]="editdata.content" placeholder="Message" aria-label="Username" aria-describedby="basic-addon1"
+      #content>
+    <button class="btn btn-outline-secondary" type="button" id="button-addon2"
+      (click)="saveEditMessage(content.value)">Save edit changes</button>
+  </div>
 
   <table class="table table-hover">
     <thead>
@@ -23,7 +30,8 @@
       <tr class="table-light">
         <th scope="row">{{message.id}}</th>
         <td>{{message.content}}</td>
-        <td><button type="button" class="btn btn-secondary btn-sml" (click)="deleteMessage(message)">Delete</button>
+        <td><button style="margin-right: 10px;" type="button" class="btn btn-secondary btn-sml" (click)="editMessage(message)">Edit</button>
+        <button type="button" class="btn btn-secondary btn-sml" (click)="deleteMessage(message)">Delete</button>
         </td>
     </tbody>
   </table>

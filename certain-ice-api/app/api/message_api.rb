@@ -19,8 +19,18 @@ class MessageApi < Grape::API
     end
     message
   end
-
-  desc 'Delete the message with the indicated id'
+  desc 'Allow updating of a message'
+  params do
+    requires :content, type: String, desc: 'Message content'
+  end
+  put '/messages/:id' do
+    message_parameters = ActionController::Parameters.new(params)
+    .permit(
+      :content
+    )
+    Message.find(params[:id]).update! message_parameters
+  end
+desc 'Delete the message with the indicated id'
   params do
     requires :id, type: Integer, desc: 'The id of the message to delete'
   end

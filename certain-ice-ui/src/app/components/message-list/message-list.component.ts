@@ -13,7 +13,8 @@ export class MessageListComponent implements OnInit {
   messages: Message[] = new Array<Message>();
   private consumer: any;
   private channel: any;
-
+  editdata:any;
+  isEdit:boolean=false;
   constructor(
     private messageService: MessageService
   ) {
@@ -56,4 +57,20 @@ export class MessageListComponent implements OnInit {
     this.messageService.delete(message).subscribe( (response : any) => { this.messages = this.messages.filter( (u: Message) => u.id != message.id ) } );
   }
 
+   public editMessage(message: Message) {
+    this.isEdit=true;
+    this.editdata=message;
+ }
+
+  saveEditMessage(editdata:string){
+    this.isEdit=false;
+    this.editdata.content=editdata;
+        const data = {
+      content: editdata,
+    }
+       this.messageService.create(data).subscribe(
+      (message: Message) => {
+      }
+    );
+  }
 }
