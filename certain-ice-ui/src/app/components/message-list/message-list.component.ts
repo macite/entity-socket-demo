@@ -1,6 +1,8 @@
 import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
+import { Conversation } from "src/app/model/conversation";
 import { Message } from "src/app/model/message";
+import { ConversationService } from "src/app/model/conversation.service";
 import { MessageService } from "src/app/model/message.service";
 import * as ActionCable from 'actioncable';
 
@@ -10,17 +12,21 @@ import * as ActionCable from 'actioncable';
   styleUrls: ['message-list.component.css'],
 })
 export class MessageListComponent implements OnInit {
+  conversations: Conversation[] = new Array<Conversation>();
+  conversation: Conversation = new Conversation();
   messages: Message[] = new Array<Message>();
   private consumer: any;
   private channel: any;
   editdata:any;
   isEdit:boolean=false;
+
   constructor(
-    private messageService: MessageService
+    private conversationService: ConversationService, private messageService: MessageService
   ) {
   }
 
   ngOnInit() {
+
     this.consumer = ActionCable.createConsumer(`ws://localhost:3000/cable`);
     this.channel = this.consumer.subscriptions.create('ChatChannel', {
       connected() {
@@ -32,20 +38,44 @@ export class MessageListComponent implements OnInit {
       received: (msgContent: any) => ( console.log(msgContent))
     });
 
-    this.messageService.query().subscribe(
-      (messages: Message[]) => {
-        this.messages.push(...messages);
+    this.conversationService.query().subscribe(
+      (conversations: Conversation[]) => {
+        this.conversations.push(...conversations);
       }
     );
   }
 
-  public addMessage(content: string) {
+  public addConversation(sender_id: string, recipient_id: string) {
     const data = {
-      content: content,
+      sender_id: sender_id,
+      recipient_id: recipient_id,
     }
 
-    // let u: message = this.messages[0];
-    // this.messageService.put<message>(u).subscribe( (message: message) => {console.log(message)} );
+    this.conversationService.create(data).subscribe(
+      (conversation: Conversation) => {
+        this.conversations.push(conversation);
+      }
+    );
+  }
+
+  public getConversationMessages(conversation: Conversation){
+    this.conversation = conversation
+    let conversation_id = conversation.id
+    let path = 'rooms/'+conversation_id+'/messages'
+    //@ts-ignore
+    this.conversationService.get_messages(conversation_id, 'messages').subscribe((messages: Message[]) => {
+        this.messages = messages
+      }
+    );
+  }
+
+  public createMessage(content: string, user_id: string){
+    const data = {
+      content: content,
+      user_id: user_id,
+      conversation_id: this.conversation.id
+    }
+
     this.messageService.create(data).subscribe(
       (message: Message) => {
         this.messages.push(message);
@@ -53,24 +83,7 @@ export class MessageListComponent implements OnInit {
     );
   }
 
-  public deleteMessage(message: Message) {
-    this.messageService.delete(message).subscribe( (response : any) => { this.messages = this.messages.filter( (u: Message) => u.id != message.id ) } );
-  }
-
-   public editMessage(message: Message) {
-    this.isEdit=true;
-    this.editdata=message;
- }
-
-  saveEditMessage(editdata:string){
-    this.isEdit=false;
-    this.editdata.content=editdata;
-        const data = {
-      content: editdata,
-    }
-       this.messageService.create(data).subscribe(
-      (message: Message) => {
-      }
-    );
+  public deleteRoom(conversation: Conversation){
+    this.conversationService.delete(conversation).subscribe( (response : any) => { this.conversations = this.conversations.filter( (u: Conversation) => u.id != conversation.id ) } );
   }
 }

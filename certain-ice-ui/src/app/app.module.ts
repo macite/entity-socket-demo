@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 
 import { UserService } from './model/user.service';
 import { MessageService } from './model/message.service';
+import { ConversationService } from './model/conversation.service';
 
 import { UserListComponent } from './components/user-list/user-list.component';
 import { MessageListComponent } from './components/message-list/message-list.component';
@@ -23,6 +24,7 @@ import { MessageListComponent } from './components/message-list/message-list.com
   providers: [
     UserService,
     MessageService,
+    ConversationService,
   ],
   bootstrap: [AppComponent]
 })
