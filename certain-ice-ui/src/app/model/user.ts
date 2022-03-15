@@ -10,17 +10,17 @@ const KEYS =
   ];
 
 export class User extends Entity {
-  id: number = -1;
-  username: string = '';
-  name: string = '';
-  password: string = '';
+  public id: number = -1;
+  public username: string = '';
+  public name: string = '';
+  public password: string = '';
 
   /**
    * Convert entity to json - used on put/post
    *
    * @returns json
    */
-  toJson(): any {
+  public toJson(): any {
     return super.toJsonWithKeys(KEYS);
   }
 

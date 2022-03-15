@@ -7,15 +7,15 @@ const KEYS =
   ];
 
 export class Message extends Entity {
-  id: number = -1;
-  content: string = '';
+  public id: number = -1;
+  public content: string = '';
 
   /**
    * Convert entity to json - used on put/post
    *
    * @returns json
    */
-  toJson(): any {
+  public toJson(): any {
     return super.toJsonWithKeys(KEYS);
   }
 

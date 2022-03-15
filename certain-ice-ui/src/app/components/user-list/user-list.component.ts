@@ -2,7 +2,7 @@ import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { RequestOptions } from "dist/ngx-entity-service/lib/request-options";
 import { User } from "src/app/model/user";
-import { UserService } from "src/app/model/user.service";
+import { UserService } from "src/app/services/user.service";
 
 @Component({
   selector: 'user-list',

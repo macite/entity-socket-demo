@@ -1,7 +1,7 @@
 import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
 import { Message } from "src/app/model/message";
-import { MessageService } from "src/app/model/message.service";
+import { MessageService } from "src/app/services/message.service";
 import * as ActionCable from 'actioncable';
 
 @Component({

@@ -1,4 +1,4 @@
-import { User } from './user';
+import { User } from '../model/user';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CachedEntityService } from 'ngx-entity-service';

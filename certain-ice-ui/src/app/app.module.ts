@@ -4,8 +4,8 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppComponent } from './app.component';
 
-import { UserService } from './model/user.service';
-import { MessageService } from './model/message.service';
+import { UserService } from './services/user.service';
+import { MessageService } from './services/message.service';
 
 import { UserListComponent } from './components/user-list/user-list.component';
 import { MessageListComponent } from './components/message-list/message-list.component';

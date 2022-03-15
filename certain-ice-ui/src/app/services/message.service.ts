@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { EntityService } from 'ngx-entity-service';
-import { Message } from './message';
+import { Message } from '../model/message';
 import API_URL from './apiURL';
 
 @Injectable()
