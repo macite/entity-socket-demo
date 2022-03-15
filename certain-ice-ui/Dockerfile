@@ -1,4 +1,4 @@
-FROM node:14
+FROM node:16
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV USER=node
@@ -20,7 +20,11 @@ WORKDIR /certain-ice-ui
 
 # Install global packages
 RUN npm --global config set user "${USER}"
-RUN npm install -g angular-cli
+
+# Copy in resources
+COPY --chown="${USER}":root . .
+
+RUN npm install
 
 # Launch - install on launch so that node_modules are updated in volume
 CMD /bin/bash -c 'npm install; npm start'
