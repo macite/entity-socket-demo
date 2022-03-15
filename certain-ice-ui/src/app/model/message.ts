@@ -3,16 +3,12 @@ import { Entity } from 'ngx-entity-service';
 const KEYS =
   [
     'id',
-    'content',
-    'user_id',
-    'conversation_id'
+    'content'
   ];
 
 export class Message extends Entity {
   id: number = -1;
   content: string = '';
-  user_id: number = -1;
-  conversation_id: number = -1;
 
   /**
    * Convert entity to json - used on put/post

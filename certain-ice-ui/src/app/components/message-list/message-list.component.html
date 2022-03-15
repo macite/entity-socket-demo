@@ -2,53 +2,37 @@
   integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 
 <div class="container-xl mt-4">
-  <h3>Create Room</h3>
-  <div *ngIf="!isEdit"class="input-group mb-3">
-    <span class="input-group-text" id="basic-addon1">Sender ID</span>
-    <input type="number" class="form-control" placeholder="Conversation Sender ID" aria-label="Username" aria-describedby="basic-addon1"
-      #sender_id>
-    <span class="input-group-text" id="basic-addon2">Recipient ID</span>
-    <input type="number" class="form-control" placeholder="Conversation Recipient ID" aria-label="Username" aria-describedby="basic-addon1"
-      #recipient_id>
-    <button class="btn btn-outline-secondary" type="button" id="button-addon3" (click)="addConversation(sender_id.value, recipient_id.value)">Add</button>
+  <h3>Create Message</h3>
+  <div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Content</span>
+    <input type="text" class="form-control" placeholder="Message" aria-label="Username" aria-describedby="basic-addon1"
+      #content>
+    <button class="btn btn-outline-secondary" type="button" id="button-addon2"
+      (click)="addMessage(content.value)">Add</button>
+  </div>
+  <div *ngIf="isEdit"class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Edit Content id : {{editdata.id}}</span>
+    <input type="text" class="form-control" [value]="editdata.content" placeholder="Message" aria-label="Username" aria-describedby="basic-addon1"
+      #content>
+    <button class="btn btn-outline-secondary" type="button" id="button-addon2"
+      (click)="saveEditMessage(content.value)">Save edit changes</button>
   </div>
 
   <table class="table table-hover">
     <thead>
       <tr>
         <th scope="col">ID</th>
-        <th scope="col">Sender ID</th>
-        <th scope="col">Recipient ID</th>
+        <th scope="col">Content</th>
         <th scope="col">Actions</th>
       </tr>
     </thead>
-    <tbody *ngFor="let conversation of conversations">
-      <tr class="table-light" (click)="getConversationMessages(conversation)">
-        <th scope="row">{{conversation.id}}</th>
-        <td>{{conversation.sender_id}}</td>
-        <td>{{conversation.recipient_id}}</td>
-        <td>
-          <button type="button" class="btn btn-secondary btn-sml" (click)="deleteRoom(conversation)">Delete</button>
+    <tbody *ngFor="let message of messages">
+      <tr class="table-light">
+        <th scope="row">{{message.id}}</th>
+        <td>{{message.content}}</td>
+        <td><button style="margin-right: 10px;" type="button" class="btn btn-secondary btn-sml" (click)="editMessage(message)">Edit</button>
+        <button type="button" class="btn btn-secondary btn-sml" (click)="deleteMessage(message)">Delete</button>
         </td>
-      </tr>
     </tbody>
   </table>
-  <br/>
-  
-  <h3>Message Box</h3>
-  <div class="message-box" *ngIf="messages != []">
-    <h5>Messages for Room ID {{conversation.id}}</h5>
-    <div  *ngFor="let message of messages">
-      <p [ngClass]="{'text-right' : conversation.sender_id == message.user_id}">
-        {{message.content}}
-      </p>
-    </div>
-    <div class="input-group mb-3">
-      <input type="text" name="content" placeholder="Type your messsage here" class="form-control" #content>
-      <input type="text" name="user_id" placeholder="Enter your User ID here" class="form-control" #user_id>
-      <button class="btn btn-outline-secondary" type="button" id="button-addon3" (click)="createMessage(content.value, user_id.value)">Add</button>
-
-    </div>
-  </div>
 </div>
-
