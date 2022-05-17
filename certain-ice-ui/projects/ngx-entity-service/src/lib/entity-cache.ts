@@ -107,7 +107,7 @@ export class EntityCache<T extends Entity> {
 
     return new Observable((observer: any) => {
       if (options?.onCacheHitReturn === 'all' || (options?.onCacheHitReturn === undefined && !options?.params?.toString().length)) {
-        observer.next(cache.values());
+        observer.next([...cache.values()]);
       } else {
         observer.next(data?.response);
       }
