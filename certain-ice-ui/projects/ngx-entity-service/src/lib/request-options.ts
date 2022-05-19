@@ -62,9 +62,9 @@ export interface RequestOptions<T extends Entity> {
   entity?: T;
 
   /**
-   * This value is passed to the constructor of any entity created in response to this request.
+   * This value is passed to the constructor and update of any entity created in response to this request.
    */
-  constructorParams?: any;
+  mapParams?: any;
 
   /**
    * When fetching from the cache, should the query return all entity objects from the

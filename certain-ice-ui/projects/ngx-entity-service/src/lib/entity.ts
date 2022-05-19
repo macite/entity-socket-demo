@@ -1,12 +1,4 @@
 /**
- * A mapping function used to map data into/out of an entity.
- *
- * @param object  The entity object or json to get the data from.
- * @returns       The data used to represent the keyed value from object.
- */
-export type TypeMapFunction = (object: any) => any;
-
-/**
  * Entity class is used to represent an object within the main application model. This
  * entity can be transferred to/from the server, and there are functions to assist with
  * copying the object to a data transfer format to send to the server, and functions to
@@ -23,14 +15,46 @@ export type TypeMapFunction = (object: any) => any;
  *    for CRUD operations.
  */
 export abstract class Entity {
+
+  /**
+   * Use to set the key case for mapping **from** json **to** the entity.
+   * This will be the case used for keys in the entity object.
+   *
+   * Defaults to snake.
+   */
+  protected jsonCase: 'camel' | 'snake' = 'snake';
+
+  /**
+   * Use to set the key case for mapping **from** json **to** the entity.
+   * This will be the case used for keys in the entity object.
+   *
+   * Defaults to camel.
+   */
+  protected entityCase: 'camel' | 'snake' = 'camel';
+
+  /**
+   * Map the key to the indicated case
+   *
+   * @param key the key string to map
+   * @param toCase the case to map to
+   * @returns the new key
+   */
+  private keyToCase(key: string, toCase: 'camel' | 'snake'): string {
+    if (toCase === 'camel') {
+      return key.charAt(0).toLowerCase() + key.slice(1);
+    } else {
+      return key.replace(/([A-Z])/g, '_$1').toLowerCase();
+    }
+  }
+
   /**
    * Construct an Entity object
    *
    * @param initialData An optional object storing the data to initialise the Entity with, calls @method updateFromJson with the data.
    */
-  constructor(initialData?: object) {
+  constructor(initialData?: object, params?: any) {
     if (initialData) {
-      this.updateFromJson(initialData);
+      this.updateFromJson(initialData, params);
     }
   }
 
@@ -44,9 +68,10 @@ export abstract class Entity {
   /**
    * Update the current entity from information within the passed in json object.
    *
-   * @param data The json object containing the data to copy into the entity.
+   * @param data    The json object containing the data to copy into the entity.
+   * @param params  Additional paramters needed for reference during updating
    */
-  public abstract updateFromJson(data: any): void;
+  public abstract updateFromJson(data: any, params?: any): void;
 
   /**
    * Update the entity with data from the passed in json object. This is used when updated
@@ -60,11 +85,18 @@ export abstract class Entity {
    *              appropriate/possible.
    */
   protected setFromJson(data: any, keys: string[], ignoredKeys?: string[], maps?: object): void {
+    if (!data) return;
+
     keys.forEach((key) => {
+      const jsonKey = this.keyToCase(key, this.jsonCase);
+      const entityKey = this.keyToCase(key, this.entityCase);
+
+      if (jsonKey in data === false) return;
+
       if (maps && maps[key]) {
-        this[key] = maps[key](data[key]);
+        this[entityKey] = maps[key](data[jsonKey]);
       } else if ((ignoredKeys && ignoredKeys.indexOf(key) < 0) || !ignoredKeys) {
-        this[key] = data[key];
+        this[entityKey] = data[jsonKey];
       }
     });
   }
@@ -91,10 +123,13 @@ export abstract class Entity {
   protected toJsonWithKeys(keys: string[], maps?: object): object {
     const json: object = {};
     keys.forEach((key) => {
+      const jsonKey = this.keyToCase(key, this.jsonCase);
+      const entityKey = this.keyToCase(key, this.entityCase);
+
       if (maps && maps[key]) {
-        json[key] = maps[key](this, key);
+        json[jsonKey] = maps[key](this, key);
       } else {
-        json[key] = this[key];
+        json[jsonKey] = this[entityKey];
       }
     });
     return json;

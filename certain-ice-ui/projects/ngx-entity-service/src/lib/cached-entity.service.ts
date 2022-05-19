@@ -157,9 +157,22 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    * @returns {Observable} a new cold observable with the newly created @type {T}
    */
-  public create(pathIds?: object, options?: RequestOptions<T>): Observable<T> {
+  public create(pathIds: object, options?: RequestOptions<T>): Observable<T> {
     const cache = this.cacheFor(options);
     return super.create(pathIds, options).pipe(tap((entity) => cache.set(entity.key, entity)));
+  }
+
+  /**
+   * Make a post request to the endpoint, using the details from the supplied entity to determine the path.
+   * The results of the request are cached using the key of the entity.
+   *
+   * @param entity An object with keys which match the placeholders within the endpointFormat string.
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
+   * @returns {Observable} a new cold observable with the newly created @type {T}
+   */
+   public post(entity: T, options?: RequestOptions<T>): Observable<T> {
+    const cache = this.cacheFor(options);
+    return super.post(entity, options).pipe(tap((reponseEntity) => cache.set(reponseEntity.key, reponseEntity)));
   }
 
   /**
