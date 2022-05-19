@@ -10,12 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_09_03_045841) do
+ActiveRecord::Schema.define(version: 2022_05_18_072155) do
 
   create_table "messages", charset: "utf8mb4", force: :cascade do |t|
     t.text "content"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "message_kind"
+    t.integer "message_color"
   end
 
   create_table "users", charset: "utf8mb4", force: :cascade do |t|
