@@ -3,6 +3,7 @@ import { Component, OnInit } from "@angular/core";
 import { Message, MessageKind } from "src/app/model/message";
 import { MessageService } from "src/app/services/message.service";
 import * as ActionCable from 'actioncable';
+import { Observable } from "rxjs";
 
 @Component({
   selector: 'message-list',
@@ -10,9 +11,10 @@ import * as ActionCable from 'actioncable';
   styleUrls: ['message-list.component.css'],
 })
 export class MessageListComponent implements OnInit {
-  messages: Message[] = new Array<Message>();
+  // messages: Message[] = new Array<Message>();
   private consumer: any;
   private channel: any;
+  messages: Observable<Message[]> = this.messageService.cache.values;
 
   private messageKinds: Map<string, MessageKind> = new Map<string, MessageKind>();
 
@@ -39,7 +41,7 @@ export class MessageListComponent implements OnInit {
 
     this.messageService.query( ).subscribe(
       (messages: Message[]) => {
-        this.messages.push(...messages);
+        console.log(messages);
       }
     );
   }
@@ -55,7 +57,7 @@ export class MessageListComponent implements OnInit {
     // this.messageService.put<message>(u).subscribe( (message: message) => {console.log(message)} );
     this.messageService.post(data).subscribe(
       (message: Message) => {
-        this.messages.push(message);
+        console.log(message);
       }
     );
   }
@@ -63,11 +65,11 @@ export class MessageListComponent implements OnInit {
   public updateMessage(message: Message) {
     message.messageColor += 1;
     message.content += ` updated color to ${message.messageColor}`;
-    this.messageService.update(message).subscribe( (response : any) => { console.log("done") } );
+    this.messageService.update(message).subscribe( (response : any) => console.log(response) );
   }
 
   public deleteMessage(message: Message) {
-    this.messageService.delete(message).subscribe( (response : any) => { this.messages = this.messages.filter( (u: Message) => u.id != message.id ) } );
+    this.messageService.delete(message).subscribe( (response : any) => console.log(response) );
   }
 
 }

@@ -19,7 +19,7 @@
         <th scope="col">Actions</th>
       </tr>
     </thead>
-    <tbody *ngFor="let message of messages">
+    <tbody *ngFor="let message of messages | async">
       <tr class="table-light">
         <th scope="row">{{message.id}}</th>
         <td>{{message.content}}</td>

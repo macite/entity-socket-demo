@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EntityService } from 'ngx-entity-service';
+import { CachedEntityService } from 'ngx-entity-service';
 import { Message } from '../model/message';
 import API_URL from './apiURL';
 
 @Injectable()
-export class MessageService extends EntityService<Message> {
+export class MessageService extends CachedEntityService<Message> {
   entityName: string = 'Message';
   protected readonly endpointFormat = 'messages/:id:';
 
