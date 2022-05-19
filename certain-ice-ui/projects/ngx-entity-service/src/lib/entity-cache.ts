@@ -1,13 +1,39 @@
-import { Observable } from "rxjs";
+import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { tap } from "rxjs/operators";
 import { Entity } from "./entity";
 import { RequestOptions } from "./request-options";
 
+/**
+ * The Query Data keeps track of each query and associated reponses.
+ * This includes the time the query expires, and all of the entities
+ * that were returned from this query. This is used by the cache to
+ * manage reqeat queries within the query's expiry time.
+ *
+ * @typeParam T The kind of entity returned by the query.
+ */
 class QueryData<T> {
+  /**
+   * The URI path used to query the server.
+   */
   public pathKey: string;
+
+  /**
+   * The time that this query will expire.
+   */
   public expireAt: Date;
+
+  /**
+   * The entity objects that were returned from the query.
+   */
   public response: T[];
 
+  /**
+   * Creates a new QueryData object for the indicated path, time, and response.
+   *
+   * @param pathKey The URI path used to query the server.
+   * @param ttl the time to live for the query.
+   * @param data the response from the query
+   */
   public constructor(pathKey: string, ttl: number, data: T[]) {
     this.pathKey = pathKey;
     this.expireAt = new Date(new Date().getTime() + ttl);
@@ -25,49 +51,163 @@ class QueryData<T> {
     // The Query has expired if the current time is larger than the expire at time
     return new Date().getTime() > this.expireAt.getTime();
   }
-
 }
 
+/**
+ * The Entity Cache is used to store the results of queries made to the server.
+ * Each query made, and its response objects, will be stored in the cache. Repeating
+ * a query within the cache's expiry time will return the cached response, and not
+ * make the request to the server.
+ *
+ * @typeParam T The kind of entity stored in the cache.
+ */
 export class EntityCache<T extends Entity> {
+  /**
+   * The data store for the cache.
+   */
   private cache: Map<string, T> = new Map<string, T>();
+
+  /**
+   * All of the queries made to the server, and their associated responses.
+   */
   private queryKeys: Map<string, QueryData<T>> = new Map<string, QueryData<T>>();
+
+  /**
+   * The time to live for all queries in the cache. This defaults to 24 hours.
+   * Time is in milliseconds.
+   */
   private cacheExpiryTime: number = 86400000; // 24 hours
 
+  /**
+   * The subject used to emit events that occur when the cache changes.
+   */
+  private cacheSubject: Subject<T[]> = new BehaviorSubject<T[]>( [] );
+
+  /**
+   * When true, dont announce via the cache subject, but do update the cache.
+   */
+  private dontAnnounce: boolean = false;
+
+  /**
+   * The time to live for all queries in the cache. This defaults to 24 hours.
+   */
   public get cacheExpiryMilliseconds() {
     return this.cacheExpiryTime;
   }
 
+  /**
+   * Change the time to live for all future queries. This defaults to 24 hours.
+   */
   public set cacheExpiryMilliseconds(value: number) {
     this.cacheExpiryTime = value;
   }
 
+  /**
+   * Fetch an Entity from the cache using its key.
+   *
+   * @param key the key for the entity
+   * @returns the entity associated with the key, or undefined if not found.
+   */
   public get(key: string) : T | undefined {
     return this.cache.get(key);
   }
 
+  /**
+   * Indicates if the cache has a value for the key.
+   *
+   * @param key the key for the entity to check.
+   * @returns true if the cache contains an entity with that key
+   */
   public has(key: string) : boolean {
     return this.cache.has(key);
   }
 
-  public set(key: string, entity: T) {
-    this.cache.set(key, entity);
+  /**
+   * Add an entity to the cache.
+   *
+   * @param entity the entity to add to the cache.
+   */
+  public add(entity: T) {
+    this.set(entity.key, entity);
+
+    if ( !this.dontAnnounce ) {
+      this.cacheSubject.next(this.currentValues);
+    }
   }
 
-  public delete(key: string) : boolean {
-    return this.cache.delete(key);
+  /**
+   * Return an observable that publishes all changes to the cache.
+   */
+  public get values() : Observable<T[]> {
+    return this.cacheSubject;
+  }
+
+  /**
+   * Returns all values in the cache
+   */
+  public get currentValues(): T[] {
+    return Array.from(this.cache.values());
+  }
+
+  /**
+   *
+   * @param key
+   * @param entity
+   */
+  public set(key: string, entity: T) {
+    this.cache.set(key, entity);
+
+    if ( !this.dontAnnounce ) {
+      this.cacheSubject.next(this.currentValues);
+    }
+  }
+
+  /**
+   * Remove an entity from the cache, based on its key.
+   *
+   * @param entity is either the key of entity, or the entity itself, to remove from cache
+   * @returns true on success
+   */
+  public delete(entity: string | T) : boolean {
+    let key: string;
+    if ( typeof entity === "string" ) {
+      key = entity;
+    } else {
+      key = entity.key;
+    }
+
+    const result = this.cache.delete(key);
+    if (result && !this.dontAnnounce) {
+      this.cacheSubject.next(this.currentValues);
+    }
+
+    return result;
   }
 
   public get size(): number {
     return this.cache.size;
   }
 
+  public clear() : void {
+    this.cache.clear();
+    this.queryKeys.clear();
+    this.cacheSubject.next([]);
+  }
+
   public registerQuery(pathKey: string, response: Observable<T[]>): Observable<T[]> {
     return response.pipe(
       tap((entityList) => {
+        // Dont announce all intermediate changes... just the final one.
+        this.dontAnnounce = true;
         this.queryKeys.set(pathKey, new QueryData(pathKey, this.cacheExpiryTime, entityList));
+
         entityList.forEach((entity) => {
           this.set(entity.key, entity);
         });
+
+        // Finished... so now announce all changes.
+        this.dontAnnounce = false;
+        this.cacheSubject.next(this.currentValues);
       })
     );
   }
@@ -92,7 +232,7 @@ export class EntityCache<T extends Entity> {
   }
 
   /**
-   * Creates a observable response for a value in the cache.
+   * Creates a observable response for an array of values from the cache.
    *
    * This uses `onCacheHitReturn` to determine if all objects from the cache are returned, or only those that were in the
    * original query. By default, all are returned if there are no query parameters in the original request (eg. /api/campus vs /api/campus?name=fred).
@@ -111,6 +251,21 @@ export class EntityCache<T extends Entity> {
       } else {
         observer.next(data?.response);
       }
+    });
+  }
+
+  /**
+   * Creates a observable response for a value in the cache.
+   *
+   * @param queryKey the query
+   * @param options any options the accompany the query
+   * @returns an observer with the required objects
+   */
+   public observerForGet(queryKey: string, options?: RequestOptions<T>): Observable<T> {
+    const data : QueryData<T> | undefined = this.queryKeys.get(queryKey);
+
+    return new Observable((observer: any) => {
+      observer.next(data?.response);
     });
   }
 }

@@ -72,7 +72,7 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
   }
 
   /**
-   * Make a query request (get all) to the end point, using the supplied parameters to determine path.
+   * Retrieve entities from the cache, or make a query request (get all) to the end point using the supplied parameters to determine path.
    * Caches all returned entities.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
@@ -115,18 +115,30 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
   public fetch(pathIds: number | string | Entity | object, options?: RequestOptions<T>): Observable<T>;
   public fetch(pathIds: any, options?: RequestOptions<T>): Observable<T> {
     const cache = this.cacheFor(options);
-    return super.get(pathIds, options).pipe(
-      map((entity: T) => {
-        if (cache.has(entity.key)) {
-          const cachedEntity = cache.get(entity.key);
-          Object.assign(cachedEntity, entity);
-          return cachedEntity as T;
-        } else {
-          cache.set(entity.key, entity);
-          return entity;
-        }
-      })
-    );
+    const queryKey = this.queryKey(pathIds, options);
+
+    // Have we run this query?
+    if (cache.ranQuery(queryKey) ) {
+      // Return the cached result
+      return cache.observerForGet(queryKey, options);
+    } else {
+      // We haven't run this query, so run it and cache the result
+      return super.get(pathIds, options).pipe(
+        map((responseEntity: T) => {
+          // We have a new response object... but is it already in the cache?
+          if (cache.has(responseEntity.key)) {
+            // Dont use response entity! We want to return the cached version.
+            const cachedEntity = cache.get(responseEntity.key);
+            // Update the cached version with the details frm the response.
+            Object.assign(cachedEntity, responseEntity);
+            return cachedEntity as T;
+          } else {
+            cache.set(responseEntity.key, responseEntity);
+            return responseEntity;
+          }
+        })
+      );
+    }
   }
 
   /**
