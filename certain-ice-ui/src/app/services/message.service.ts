@@ -17,7 +17,7 @@ export class MessageService extends EntityService<Message> {
 
   protected createInstanceFrom(json: any, other?: any): Message {
     const message = new Message();
-    message.updateFromJson(json);
+    message.updateFromJson(json, other);
     return message;
   }
 

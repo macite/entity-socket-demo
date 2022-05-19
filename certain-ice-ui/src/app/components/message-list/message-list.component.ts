@@ -1,6 +1,6 @@
 import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
-import { Message } from "src/app/model/message";
+import { Message, MessageKind } from "src/app/model/message";
 import { MessageService } from "src/app/services/message.service";
 import * as ActionCable from 'actioncable';
 
@@ -14,9 +14,15 @@ export class MessageListComponent implements OnInit {
   private consumer: any;
   private channel: any;
 
+  private messageKinds: Map<string, MessageKind> = new Map<string, MessageKind>();
+
   constructor(
     private messageService: MessageService
   ) {
+    this.messageKinds.set('info', new MessageKind('info'));
+    this.messageKinds.set('test', new MessageKind('test'));
+
+    messageService.defaultMapParams = this.messageKinds;
   }
 
   ngOnInit() {
@@ -31,7 +37,7 @@ export class MessageListComponent implements OnInit {
       received: (msgContent: any) => ( console.log(msgContent))
     });
 
-    this.messageService.query().subscribe(
+    this.messageService.query( ).subscribe(
       (messages: Message[]) => {
         this.messages.push(...messages);
       }
@@ -39,17 +45,25 @@ export class MessageListComponent implements OnInit {
   }
 
   public addMessage(content: string) {
-    const data = {
-      content: content,
-    }
+    const data = new Message();
+
+    data.content = content,
+    data.kind = this.messageKinds.get('test');
+    data.messageColor= 1;
 
     // let u: message = this.messages[0];
     // this.messageService.put<message>(u).subscribe( (message: message) => {console.log(message)} );
-    this.messageService.create(data).subscribe(
+    this.messageService.post(data).subscribe(
       (message: Message) => {
         this.messages.push(message);
       }
     );
+  }
+
+  public updateMessage(message: Message) {
+    message.messageColor += 1;
+    message.content += ` updated color to ${message.messageColor}`;
+    this.messageService.update(message).subscribe( (response : any) => { console.log("done") } );
   }
 
   public deleteMessage(message: Message) {

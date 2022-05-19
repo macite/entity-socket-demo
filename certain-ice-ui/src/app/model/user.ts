@@ -29,7 +29,7 @@ export class User extends Entity {
    *
    * @param data json object with data for entity
    */
-  public updateFromJson(data: any): void {
+  public updateFromJson(data: any, params?: any): void {
     this.setFromJson(data, KEYS);
     //this.username = data['username']; //etc
   }

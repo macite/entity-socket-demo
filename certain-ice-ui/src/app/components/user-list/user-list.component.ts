@@ -1,6 +1,6 @@
 import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
-import { RequestOptions } from "dist/ngx-entity-service/lib/request-options";
+import { RequestOptions } from "ngx-entity-service";
 import { User } from "src/app/model/user";
 import { UserService } from "src/app/services/user.service";
 

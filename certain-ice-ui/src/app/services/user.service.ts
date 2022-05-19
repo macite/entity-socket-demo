@@ -17,7 +17,7 @@ export class UserService extends CachedEntityService<User> {
 
   protected createInstanceFrom(json: any, other?: any): User {
     const user = new User();
-    user.updateFromJson(json);
+    user.updateFromJson(json, other);
     return user;
   }
 
