@@ -50,6 +50,13 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
     }
   }
 
+  /**
+   * Create a key for a request, based on its path and parameters.
+   *
+   * @param pathIds the ids to embed in the uri
+   * @param options the request options, with parameters and end point format
+   * @returns a query string with the path and parameters
+   */
   private queryKey(pathIds: any, options?: RequestOptions<T>): string {
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, pathIds);
     const params = options?.params ? new HttpParams({fromObject: options?.params} as HttpParamsOptions) : undefined;
@@ -182,9 +189,9 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    * @returns {Observable} a new cold observable with the newly created @type {T}
    */
-   public post(entity: T, options?: RequestOptions<T>): Observable<T> {
+   public store(entity: T, options?: RequestOptions<T>): Observable<T> {
     const cache = this.cacheFor(options);
-    return super.post(entity, options).pipe(tap((reponseEntity) => cache.set(reponseEntity.key, reponseEntity)));
+    return super.store(entity, options).pipe(tap((reponseEntity) => cache.set(reponseEntity.key, reponseEntity)));
   }
 
   /**

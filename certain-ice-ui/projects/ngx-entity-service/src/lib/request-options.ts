@@ -1,6 +1,7 @@
 import { HttpHeaders, HttpParams } from '@angular/common/http';
 import { Entity } from './entity';
 import { EntityCache } from './entity-cache';
+import { EntityMapping } from './entity-mapping';
 
 export interface RequestOptions<T extends Entity> {
   /**
@@ -62,9 +63,14 @@ export interface RequestOptions<T extends Entity> {
   entity?: T;
 
   /**
-   * This value is passed to the constructor and update of any entity created in response to this request.
+   * The mapping data to use when mapping the response to the entity. This overrides the service's defaulty mapping data.
    */
-  mapParams?: any;
+  mapping?: EntityMapping<T>;
+
+  /**
+   * Ignore these keys during the mapping operation that converts the entity to json.
+   */
+  ignoreKeys?: string[];
 
   /**
    * When fetching from the cache, should the query return all entity objects from the

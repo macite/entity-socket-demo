@@ -24,7 +24,8 @@ export class MessageListComponent implements OnInit {
     this.messageKinds.set('info', new MessageKind('info'));
     this.messageKinds.set('test', new MessageKind('test'));
 
-    messageService.defaultMapParams = this.messageKinds;
+    // Could also be in the service...
+    messageService.mapping.params = this.messageKinds;
   }
 
   ngOnInit() {
@@ -55,7 +56,7 @@ export class MessageListComponent implements OnInit {
 
     // let u: message = this.messages[0];
     // this.messageService.put<message>(u).subscribe( (message: message) => {console.log(message)} );
-    this.messageService.post(data).subscribe(
+    this.messageService.store(data).subscribe(
       (message: Message) => {
         console.log(message);
       }

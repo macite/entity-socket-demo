@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RequestOptions } from './request-options';
+import { EntityMapping } from './entity-mapping';
 
 /**
  * ResourceService, responsible for the CRUD actions for all resources which inherit form it.
@@ -29,9 +30,12 @@ export abstract class EntityService<T extends Entity> {
   protected apiUrl: string;
 
   /**
-   * This default map params is passed to all constructors and json mapping functions.
+   * Details the process for mapping the entity from and to json. This should be
+   * setup in the child class constructors, and will be used to map data from json
+   * during building of the entity, and to json when transferring the entity to the
+   * server.
    */
-  public defaultMapParams?: any;
+  public mapping: EntityMapping<T> = new EntityMapping<T>();
 
   /**
    * Construct the EntityService with the passed in HttpClient and apiUrl. This should be the
@@ -75,7 +79,8 @@ export abstract class EntityService<T extends Entity> {
    * @returns the body to use for the http request
    */
   private bodyFor(pathIds: object | T | any, options?: RequestOptions<T>): FormData | object | undefined {
-    return options?.body || options?.entity?.toJson() || typeof pathIds.toJson === 'function' ? pathIds.toJson() : pathIds;
+    const mapping = this.mappingFor(options);
+    return options?.body || options?.entity?.toJson(mapping, options?.ignoreKeys) || typeof pathIds.toJson === 'function' ? pathIds.toJson(mapping) : pathIds;
   }
 
   /**
@@ -84,8 +89,8 @@ export abstract class EntityService<T extends Entity> {
    * @param options the request options
    * @returns the map params from the options, or the default options
    */
-  private mapParamsFor(options?: RequestOptions<T>): any {
-    return options?.mapParams || this.defaultMapParams;
+  private mappingFor(options?: RequestOptions<T>): EntityMapping<T> {
+    return options?.mapping || this.mapping;
   }
 
   /**
@@ -94,6 +99,20 @@ export abstract class EntityService<T extends Entity> {
    * @param json The json data to convert to T
    */
   protected abstract createInstanceFrom(json: any, other?: any): T;
+
+  /**
+   * Create and then initialise an entity object.
+   *
+   * @param json The json data used to initialise the entity
+   * @param other Any other data to be passed to the entity. This comes from the map params in the request options, or the
+   *              default mapping params from the service.
+   * @returns a new instance of the entity, initialised with the json data.
+   */
+  public buildInstance(json: object, other?: any): T {
+    const result = this.createInstanceFrom(json, other);
+    result.updateFromJson(json, this.mapping);
+    return result;
+  }
 
   /**
    * Make a get request to the end point, using the supplied parameters to determine path.
@@ -115,7 +134,7 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) =>
-            this.createInstanceFrom(rawData, this.mapParamsFor(options))
+            this.buildInstance(rawData, this.mappingFor(options))
         )
       ); // Turn the raw JSON returned into the object T
   }
@@ -133,8 +152,10 @@ export abstract class EntityService<T extends Entity> {
       .get(path, options)
       .pipe(
         map(
-          (rawData) =>
-            this.convertCollection(rawData instanceof Array ? rawData : [rawData], this.mapParamsFor(options))
+          (rawData) => {
+            const result = this.convertCollection(rawData instanceof Array ? rawData : [rawData], this.mappingFor(options))
+            return result;
+          }
         )
       );
   }
@@ -147,8 +168,8 @@ export abstract class EntityService<T extends Entity> {
    *                When an entity is passed via options, this entity will be updated with the response from the call, and the entity
    *                parameter will be used for the request data.
    */
-  public update(entity: T, options?: RequestOptions<T>): Observable<T>;
-  public update(entity: any, options?: RequestOptions<T>): Observable<T> {
+  public update(entity: object, options?: RequestOptions<T>): Observable<T>;
+  public update(entity: T, options?: RequestOptions<T>): Observable<T> {
     // ensure that body is defined in options
     if (options === undefined) {
       options = {};
@@ -163,7 +184,7 @@ export abstract class EntityService<T extends Entity> {
     return this.put<T>(entity, options).pipe(
       map(
         (rawData) => {
-          responseEntity.updateFromJson(rawData, this.mapParamsFor(options));
+          responseEntity.updateFromJson(rawData, this.mappingFor(options));
           return responseEntity;
         }
       )
@@ -179,8 +200,7 @@ export abstract class EntityService<T extends Entity> {
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public put<S>(pathIds: object, options?: RequestOptions<T>): Observable<S>;
-  public put<S>(pathIds: any, options?: RequestOptions<T>): Observable<S> {
+  public put<S>(pathIds: object, options?: RequestOptions<T>): Observable<S> {
     const object = { ...pathIds };
     const json = this.bodyFor(pathIds, options);
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
@@ -189,14 +209,14 @@ export abstract class EntityService<T extends Entity> {
   }
 
   /**
-   * Make a create request to the endpoint, using the supplied parameters to determine the path.
+   * Create a new entity by sending the supplied data to the endpoint, and converting the response to an
+   * entity object.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    * @returns {Observable} a new cold observable with the newly created @type {T}
    */
-  public create(pathIds: object, options?: RequestOptions<T>): Observable<T>;
-  public create(pathIds: any, options?: RequestOptions<T>): Observable<T> {
+  public create(pathIds: object, options?: RequestOptions<T>): Observable<T> {
     const object = { ...pathIds };
     const json = this.bodyFor(pathIds, options);
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
@@ -204,32 +224,46 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) =>
-            this.createInstanceFrom(rawData, this.mapParamsFor(options))
+            this.buildInstance(rawData, this.mappingFor(options))
         )
       );
   }
 
   /**
-   * Make a create request to the endpoint, using the supplied parameters to determine the path.
+   * Save an entity by making a post request using the passed in entity. The response will be used to
+   * update the entity.
    *
-   * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
-   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
+   * @param entity The entity object to be saved.
+   * @param options Optional request options. This can be used to customise headers, parameters, or the body. Entity is ignored from the options.
    * @returns {Observable} a new cold observable with the newly created @type {T}
    */
-  public post(pathIds: object | T, options?: RequestOptions<T>): Observable<T> {
-    const entity: T = options?.entity || pathIds as T;
-
+  public store(entity: T, options?: RequestOptions<T>): Observable<T> {
     const json = this.bodyFor(entity, options);
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, entity);
     return this.httpClient.post(path, json, options)
       .pipe(
         map(
           (rawData) => {
-            entity.updateFromJson(rawData, this.mapParamsFor(options));
+            entity.updateFromJson(rawData, this.mappingFor(options));
             return entity;
           }
         )
       );
+  }
+
+  /**
+   * Make a post request to create the passed in entity.
+   *
+   * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
+   * @returns {Observable} a new cold observable with the newly created @type {T}
+   */
+  public post<S>(pathIds: object, options?: RequestOptions<T>): Observable<S> {
+    const object = { ...pathIds };
+    const json = this.bodyFor(pathIds, options);
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
+
+    return this.httpClient.post(path, json, options) as Observable<S>;
   }
 
   /**
@@ -255,16 +289,23 @@ export abstract class EntityService<T extends Entity> {
    * from the server.
    * @returns {T[]} The array of Objects
    */
-  private convertCollection(collection: any, other?: any): T[] {
-    return collection.map((data: any) => this.createInstanceFrom(data, other));
+  private convertCollection(collection: any, mapping: EntityMapping<T>): T[] {
+    return collection.map((
+      data: any) => {
+        const result = this.buildInstance(data, mapping);
+        return result;
+      });
   }
 
   /**
    * Gets the unique key for an entity of type @class Entity.
    * This is used to identify the object within a cache.
+   * This defaults to 'id', but can be overriden to change this behaviour.
    *
    * @param json The json object to get the key from
    * @returns string containing the unique key value
    */
-  public abstract keyForJson(json: any): string;
+  public keyForJson(json: any): string {
+    return json.id;
+  }
 }

@@ -1,6 +1,7 @@
 import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { tap } from "rxjs/operators";
 import { Entity } from "./entity";
+import { EntityService } from "./entity.service";
 import { RequestOptions } from "./request-options";
 
 /**
@@ -136,6 +137,27 @@ export class EntityCache<T extends Entity> {
   }
 
   /**
+   * Retrieve an object from the cache, or create it using the passed in data.
+   *
+   * @param key the key for the entity to find or create (must also be present in the data in case of object creation)
+   * @param service the service associated with the creation of these entities
+   * @param data the json data to pass to the object when created
+   * @param mapParams the map params to pass to the object when created
+   * @returns
+   */
+  public getOrCreate(key: string, service: EntityService<T>, data: object, mapParams?: any) {
+    let entity: T;
+    if ( this.has(key) ) {
+      entity = this.get(key) as T;
+    } else {
+      entity = service.buildInstance(data, mapParams);
+      this.add(entity);
+    }
+
+    return entity;
+  }
+
+  /**
    * Return an observable that publishes all changes to the cache.
    */
   public get values() : Observable<T[]> {
@@ -150,9 +172,10 @@ export class EntityCache<T extends Entity> {
   }
 
   /**
+   * Stores or updates an entity within the cache.
    *
-   * @param key
-   * @param entity
+   * @param key the key for the entity to store
+   * @param entity the entity to store in the cache
    */
   public set(key: string, entity: T) {
     this.cache.set(key, entity);
@@ -184,16 +207,30 @@ export class EntityCache<T extends Entity> {
     return result;
   }
 
+  /**
+   * Returns the number of entities in the cache.
+   */
   public get size(): number {
     return this.cache.size;
   }
 
+  /**
+   * Clears the cache and all of its queries.
+   */
   public clear() : void {
     this.cache.clear();
     this.queryKeys.clear();
     this.cacheSubject.next([]);
   }
 
+  /**
+   * Registers a query with the cache. The query values will be stored in the cache along
+   * with the query details. If the query is run again then the previous response will be returned.
+   *
+   * @param pathKey the path for the query
+   * @param response the observer of the data returned from the query
+   * @returns the observer of the response
+   */
   public registerQuery(pathKey: string, response: Observable<T[]>): Observable<T[]> {
     return response.pipe(
       tap((entityList) => {
