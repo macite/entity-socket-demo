@@ -31,6 +31,8 @@ export class MessageService extends CachedEntityService<Message> {
         }
       }
     );
+
+    this.mapping.mapAllKeysToJsonExcept('id');
   }
 
   protected override createInstanceFrom(json: any, other?: any): Message {

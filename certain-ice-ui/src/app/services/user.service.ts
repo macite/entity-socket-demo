@@ -23,6 +23,8 @@ export class UserService extends CachedEntityService<User> {
       'name',
       'password'
     );
+
+    this.mapping.mapAllKeysToJsonExcept('id');
   }
 
   public override createInstanceFrom(json: any, other?: any): User {

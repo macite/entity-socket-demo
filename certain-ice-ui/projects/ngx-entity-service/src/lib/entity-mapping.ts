@@ -22,7 +22,13 @@ export class EntityMapping<T extends Entity> {
   /**
    * Indicates the keys from the entity are directly mapped using updateFromJson.
    */
-  public keys: { entityKey: string, jsonKey: string}[] = []; //{ toEntity: string[], toJson: string[] } = { toEntity: [], toJson: [] };
+  public keys: { entityKey: string, jsonKey: string}[] = [];
+
+  /**
+   * Indicate the keys that are to be mapped to json for this entity.
+   * This is used when sending data to the server.
+   */
+  public jsonKeys: string[] = [];
 
   /**
    * Mapping functions maps one value betweeen the entity and json. Functions return these
@@ -73,7 +79,7 @@ export class EntityMapping<T extends Entity> {
    * @param toEntityFn optional function for mapping json to the entity
    * @param toJsonFn optional function for mapping the entity to json
    */
-  public addKey(key: string | string[], toEntityFn?: ToEntityMapFunction<T>, toJsonFn?: ToJsonMapFunction<T>) {
+  public addKey(key: string | string[], toEntityFn?: ToEntityMapFunction<T>, toJsonFn?: ToJsonMapFunction<T>): void {
 
     const data = {
       entityKey:  Array.isArray(key) ? key[0] : key,
@@ -90,7 +96,14 @@ export class EntityMapping<T extends Entity> {
     }
   }
 
-  public addKeys( ...mapData: (string | string[] | {keys: (string | string[]), toEntityFn?: ToEntityMapFunction<T>, toJsonFn?: ToJsonMapFunction<T>, toEntityOp?: ToEntityMapOperation<T>})[] ) {
+  /**
+   * Setup the mappings for the entity. This is used when creating a new entity, or converting to json.
+   *
+   * @param mapData the mapping data, with each being the string key, an array with two elements mapping
+   *                the entity key to json key, or a hash with the keys (as string or array) and options
+   *                for the mapping functions and operations.
+   */
+  public addKeys( ...mapData: (string | string[] | {keys: (string | string[]), toEntityFn?: ToEntityMapFunction<T>, toJsonFn?: ToJsonMapFunction<T>, toEntityOp?: ToEntityMapOperation<T>})[] ): void {
     mapData.forEach(data => {
       if (typeof data === 'string') {
         this.addKey(data as string);
@@ -107,12 +120,43 @@ export class EntityMapping<T extends Entity> {
   }
 
   /**
+   * Indicate the entity keys to map to json, other keys are ignored.
+   *
+   * @param keys the entity key to include when mapping to json
+   */
+  public addJsonKey(... keys: string[]): void {
+    keys.forEach(key => {
+      if ( this.jsonKeys.indexOf(key) === -1 ) {
+        this.jsonKeys.push(key);
+      }
+    });
+  }
+
+  /**
+   * Map all of the entity keys to json. None are mapped by default.
+   */
+  public mapAllKeysToJson(): void {
+    this.addJsonKey(
+      ...this.keys.map(key => { return key.entityKey; })
+    );
+  }
+
+  /**
+   * Map all of the entity keys to json, except those listed. None are mapped by default.
+   */
+   public mapAllKeysToJsonExcept(...ignoreKeys: string[]): void {
+    this.addJsonKey(
+      ...this.keys.map(key => { return key.entityKey; }).filter(key => { return (!ignoreKeys) || ignoreKeys.indexOf(key) === -1 })
+    );
+  }
+
+  /**
    * Add an operation to be performed on an entity during mapping.
    *
    * @param key the key to  identify within the data
    * @param operation the action to perform on the entity
    */
-  public addEntityOperation(key: string | string[], operation: ToEntityMapOperation<T>) {
+  public addEntityOperation(key: string | string[], operation: ToEntityMapOperation<T>): void {
     const entityKey = Array.isArray(key) ? key[0] : key;
     this.mapOperations.toEntity[entityKey] = operation;
   }
@@ -163,8 +207,8 @@ export class EntityMapping<T extends Entity> {
       const jsonKey = hash.jsonKey;
       const entityKey = hash.entityKey;
 
-      // Skip keys we ignore
-      if( ignoreKeys && ignoreKeys.indexOf(entityKey) !== -1 ) {
+      // Skip keys we ignore, and those we do not export
+      if( (ignoreKeys && ignoreKeys.indexOf(entityKey) !== -1) || this.jsonKeys.indexOf(entityKey) === -1 ) {
         return;
       }
 

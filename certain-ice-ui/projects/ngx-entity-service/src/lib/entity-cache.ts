@@ -92,7 +92,7 @@ export class EntityCache<T extends Entity> {
   /**
    * The time to live for all queries in the cache. This defaults to 24 hours.
    */
-  public get cacheExpiryMilliseconds() {
+  public get cacheExpiryMilliseconds(): number {
     return this.cacheExpiryTime;
   }
 
@@ -128,7 +128,7 @@ export class EntityCache<T extends Entity> {
    *
    * @param entity the entity to add to the cache.
    */
-  public add(entity: T) {
+  public add(entity: T): void {
     this.set(entity.key, entity);
 
     if ( !this.dontAnnounce ) {
@@ -145,7 +145,7 @@ export class EntityCache<T extends Entity> {
    * @param mapParams the map params to pass to the object when created
    * @returns
    */
-  public getOrCreate(key: string, service: EntityService<T>, data: object, mapParams?: any) {
+  public getOrCreate(key: string, service: EntityService<T>, data: object, mapParams?: any): T {
     let entity: T;
     if ( this.has(key) ) {
       entity = this.get(key) as T;
@@ -177,7 +177,7 @@ export class EntityCache<T extends Entity> {
    * @param key the key for the entity to store
    * @param entity the entity to store in the cache
    */
-  public set(key: string, entity: T) {
+  public set(key: string, entity: T): void {
     this.cache.set(key, entity);
 
     if ( !this.dontAnnounce ) {
@@ -255,7 +255,7 @@ export class EntityCache<T extends Entity> {
    * @param pathKey the query path
    * @returns true if the query has been run, and has not expired.
    */
-  public ranQuery(pathKey: string) {
+  public ranQuery(pathKey: string): boolean {
     if ( this.queryKeys.has(pathKey) ) {
       const data : QueryData<T> | undefined = this.queryKeys.get(pathKey);
       if ( data?.hasExpired ) {
