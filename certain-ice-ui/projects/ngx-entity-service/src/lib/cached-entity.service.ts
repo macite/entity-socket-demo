@@ -79,8 +79,10 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
   }
 
   /**
-   * Retrieve entities from the cache, or make a query request (get all) to the end point using the supplied parameters to determine path.
-   * Caches all returned entities.
+   * Make a query request (fetch all) to the end point, using the supplied parameters to determine path.
+   * Caches all returned entities. This will **not** read Entities from the cache, instead you should
+   * use `query` to query from the cache where possible. Use `fetchAll` in cases where you want to force
+   * bypassing of the cache.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
@@ -88,18 +90,16 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    */
    public fetchAll(pathIds?: object, options?: RequestOptions<T>): Observable<T[]> {
     const cache = this.cacheFor(options);
-    const queryKey = this.queryKey(pathIds, options);
-    if (cache.ranQuery(queryKey) ) {
-      return cache.observerFor(queryKey, options);
-    } else {
-      return this.query(pathIds, options);
-    }
+    return cache.registerQuery(this.queryKey(pathIds, options), super.query(pathIds, options));
   }
 
   /**
-   * Make a query request (get all) to the end point, using the supplied parameters to determine path.
-   * Caches all returned entities. This will **not** read Entities from the cache, instead you should
-   * use `fetchAll` to query from the cache where possible.
+   * Retrieve entities from the cache, or make a query request (get all) to the end point using the supplied parameters to determine path.
+   * Caches all returned entities. This will read values from the cache where the query has been made before. For example, if you do a
+   * query with no parameters, then the first time this will make the request and subsequent calls will return from the cache. If you then
+   * make a get request for a different query path, or a query with parameters, then get request will be made even if there is a related object
+   * in the cache. This ensures that differences in calls are respected. Query can get a list of entities with minimal details, and then
+   * a specific get request can be made to get the full details of a single entity (even though it is in the cache).
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
@@ -107,7 +107,12 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    */
   public query(pathIds?: object, options?: RequestOptions<T>): Observable<T[]> {
     const cache = this.cacheFor(options);
-    return cache.registerQuery(this.queryKey(pathIds, options), super.query(pathIds, options));
+    const queryKey = this.queryKey(pathIds, options);
+    if (cache.ranQuery(queryKey) ) {
+      return cache.observerFor(queryKey, options);
+    } else {
+      return this.fetchAll(pathIds, options);
+    }
   }
 
   /**
