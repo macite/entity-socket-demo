@@ -111,6 +111,22 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
   }
 
   /**
+   * Bypass the cache and "fetch" the data from the server. This returns the Entity from the server and ensuring it is within the
+   * cache. Use get to check for the object in the cache, and potentially avoid a get request to the server.
+   *
+   * @param pathIds Either the id, if a number and maps simple to ':id', otherwise an object
+   *                with keys the match the placeholders within the endpointFormat string.
+   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
+   */
+  public fetch(pathIds: number | string | Entity | object, options?: RequestOptions<T>): Observable<T>;
+  public fetch(pathIds: any, options?: RequestOptions<T>): Observable<T> {
+    const key: string = this.keyFromPathIds(pathIds);
+    const cache = this.cacheFor(options);
+
+    return super.get(pathIds, options).pipe(tap((entity: T) => cache.set(entity.key, entity)));
+  }
+
+  /**
    * First, tries to retrieve from cache, the object with the id, or id field from the pathIds.
    * If found, return the item from cache, otherwise make a get request to the end point,
    * using the supplied parameters to determine path. Caches the returned object
@@ -119,8 +135,8 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    *                with keys the match the placeholders within the endpointFormat string.
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public fetch(pathIds: number | string | Entity | object, options?: RequestOptions<T>): Observable<T>;
-  public fetch(pathIds: any, options?: RequestOptions<T>): Observable<T> {
+  public get(pathIds: number | string | object, options?: RequestOptions<T>): Observable<T>;
+  public get(pathIds: any, options?: RequestOptions<T>): Observable<T> {
     const cache = this.cacheFor(options);
     const queryKey = this.queryKey(pathIds, options);
 
@@ -145,26 +161,6 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
           }
         })
       );
-    }
-  }
-
-  /**
-   * First, tries to retrieve from cache, the object with the id, or id field from the pathIds.
-   * If found, return the item from cache, otherwise make a get request to the end point,
-   * using the supplied parameters to determine path. Caches the returned object
-   *
-   * @param pathIds Either the id, if a number and maps simple to ':id', otherwise an object
-   *                with keys the match the placeholders within the endpointFormat string.
-   * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
-   */
-  public get(pathIds: number | string | object, options?: RequestOptions<T>): Observable<T>;
-  public get(pathIds: any, options?: RequestOptions<T>): Observable<T> {
-    const key: string = this.keyFromPathIds(pathIds);
-    const cache = this.cacheFor(options);
-    if (cache.has(key)) {
-      return new Observable((observer: any) => observer.next(cache.get(key)));
-    } else {
-      return super.get(pathIds, options).pipe(tap((entity: T) => cache.set(entity.key, entity)));
     }
   }
 

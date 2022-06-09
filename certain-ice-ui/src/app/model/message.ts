@@ -1,4 +1,4 @@
-import { Entity } from "projects/ngx-entity-service/src/public-api";
+import { Entity, EntityMapping } from "projects/ngx-entity-service/src/public-api";
 
 
 const KEYS =
