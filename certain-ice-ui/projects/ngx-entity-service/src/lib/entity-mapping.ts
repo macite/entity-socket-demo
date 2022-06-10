@@ -1,8 +1,11 @@
 import { Entity } from "./entity";
+import { MappingProcess } from "./mapping-process";
 
 export type ToJsonMapFunction<T extends Entity> = (entity: T, key: string) => any;
 export type ToEntityMapFunction<T extends Entity> = (data: object, key: string, entity: T, params?: any) => any;
 export type ToEntityMapOperation<T extends Entity> = (data: object, key: string, entity: T, params?: any) => void;
+export type ToEntityMapOperationAsync<T extends Entity> = (process: MappingProcess<T>) => void;
+
 /**
  * Entity mapping is use to transfer data between entity and json. In the framework, json acts
  * as a data transfer object (DTO) and entity acts as a domain object. The mapping is used to
@@ -49,7 +52,7 @@ export class EntityMapping<T extends Entity> {
    * The mapOperations are useful for mapping collections, where values need to be added to the entity.
    */
   public mapOperations: {
-    toEntity: { [key: string]: ToEntityMapOperation<T> }
+    toEntity: { [key: string]: { kind: "sync", fn: ToEntityMapOperation<T> } | { kind: "async", fn: ToEntityMapOperationAsync<T> } }
   } = { toEntity: {} };
 
   /**
@@ -103,7 +106,7 @@ export class EntityMapping<T extends Entity> {
    *                the entity key to json key, or a hash with the keys (as string or array) and options
    *                for the mapping functions and operations.
    */
-  public addKeys( ...mapData: (string | string[] | {keys: (string | string[]), toEntityFn?: ToEntityMapFunction<T>, toJsonFn?: ToJsonMapFunction<T>, toEntityOp?: ToEntityMapOperation<T>})[] ): void {
+  public addKeys( ...mapData: (string | string[] | {keys: (string | string[]), toEntityFn?: ToEntityMapFunction<T>, toJsonFn?: ToJsonMapFunction<T>, toEntityOp?: ToEntityMapOperation<T>, toEntityOpAsync?: ToEntityMapOperationAsync<T>})[] ): void {
     mapData.forEach(data => {
       if (typeof data === 'string') {
         this.addKey(data as string);
@@ -112,8 +115,11 @@ export class EntityMapping<T extends Entity> {
       } else {
         this.addKey(data.keys, data.toEntityFn, data.toJsonFn);
 
+        //TODO: validate only one of these is provided.
         if (data.toEntityOp) {
           this.addEntityOperation(data.keys, data.toEntityOp);
+        } else if (data.toEntityOpAsync) {
+          this.addAsyncEntityOperation(data.keys, data.toEntityOpAsync);
         }
       }
     });
@@ -151,14 +157,29 @@ export class EntityMapping<T extends Entity> {
   }
 
   /**
-   * Add an operation to be performed on an entity during mapping.
+   * Add an operation to be performed on an entity during mapping. These synchronous actions do not need
+   * to make async calls and wait for responses to update the entity. If you need to make an asynchronous call
+   * that must complete before the rest of the entity mapping occures, then use the `addAsyncEntityOperation` method.
    *
    * @param key the key to  identify within the data
    * @param operation the action to perform on the entity
    */
   public addEntityOperation(key: string | string[], operation: ToEntityMapOperation<T>): void {
     const entityKey = Array.isArray(key) ? key[0] : key;
-    this.mapOperations.toEntity[entityKey] = operation;
+    this.mapOperations.toEntity[entityKey] = {kind: "sync", fn: operation};
+  }
+
+  /**
+   * Add an operation to be performed on an entity during mapping. This is used in cases where an asynchronous call
+   * is needed (such as to fetch related entities from the server). In these cases you need to use the `MappingProcess`
+   * class to `continue` execution of the mapping once the asynchronous call has completed.
+   *
+   * @param key the key to  identify within the data
+   * @param operation the action to perform on the entity
+   */
+   public addAsyncEntityOperation(key: string | string[], operation: ToEntityMapOperationAsync<T>): void {
+    const entityKey = Array.isArray(key) ? key[0] : key;
+    this.mapOperations.toEntity[entityKey] = {kind: "async", fn: operation};
   }
 
   /**
@@ -172,20 +193,8 @@ export class EntityMapping<T extends Entity> {
   public updateEntityFromJson(entity: T, data: any): void {
     if (!data || !entity) return;
 
-    this.keys.forEach((hash) => {
-      const jsonKey = hash.jsonKey;
-      const entityKey = hash.entityKey;
-
-      if (jsonKey in data === false) return;
-
-      if (this.mapOperations.toEntity[entityKey]) {
-        this.mapOperations.toEntity[entityKey](data, entityKey, entity, this.params);
-      } else if (this.mapFunctions.toEntity[entityKey]) {
-        entity[entityKey] = this.mapFunctions.toEntity[entityKey](data, entityKey, entity, this.params);
-      } else {
-        entity[entityKey] = data[jsonKey];
-      }
-    });
+    const plan = new MappingProcess<T>(this, entity, data);
+    plan.execute();
   }
 
   /**

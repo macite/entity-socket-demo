@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Message, MessageKind } from '../model/message';
 import API_URL from './apiURL';
-import { CachedEntityService, Entity, EntityMapping } from 'projects/ngx-entity-service/src/public-api';
+import { CachedEntityService, Entity } from 'projects/ngx-entity-service/src/public-api';
+import { MappingProcess } from 'projects/ngx-entity-service/src/lib/mapping-process';
 
 @Injectable()
 export class MessageService extends CachedEntityService<Message> {
@@ -17,7 +18,13 @@ export class MessageService extends CachedEntityService<Message> {
 
     this.mapping.addKeys(
       'id',
-      'content',
+      {
+        keys: 'content',
+        toEntityOpAsync: (process: MappingProcess<Message>) => {
+          process.entity.content = process.data['content'];
+          process.continue();
+        }
+      },
       'messageColor',
       {
         keys: ['kind', 'message_kind'],
