@@ -2,8 +2,8 @@ import { Entity } from "./entity";
 import { MappingProcess } from "./mapping-process";
 
 export type ToJsonMapFunction<T extends Entity> = (entity: T, key: string) => any;
-export type ToEntityMapFunction<T extends Entity> = (data: object, key: string, entity: T, params?: any) => any;
-export type ToEntityMapOperation<T extends Entity> = (data: object, key: string, entity: T, params?: any) => void;
+export type ToEntityMapFunction<T extends Entity> = (data: object, jsonKey: string, entity: T, params?: any) => any;
+export type ToEntityMapOperation<T extends Entity> = (data: object, jsonKey: string, entity: T, params?: any) => void;
 export type ToEntityMapOperationAsync<T extends Entity> = (process: MappingProcess<T>) => void;
 
 /**

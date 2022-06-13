@@ -62,11 +62,11 @@ export class MappingProcess<T extends Entity> {
             op.fn(this);
             return; // end the loop as we cannot continue now...
           } else {
-            op.fn(this.data, entityKey, this.entity, this.plan.constructorParams);
+            op.fn(this.data, jsonKey, this.entity, this.plan.constructorParams);
           }
         } else if (this.plan.mapFunctions.toEntity[entityKey]) {
           // Run mapping function....
-          this.entity[entityKey] = this.plan.mapFunctions.toEntity[entityKey](this.data, entityKey, this.entity, this.plan.constructorParams);
+          this.entity[entityKey] = this.plan.mapFunctions.toEntity[entityKey](this.data, jsonKey, this.entity, this.plan.constructorParams);
         } else {
           // or just copy in the data
           this.entity[entityKey] = this.data[jsonKey];
