@@ -29,7 +29,7 @@ export class MessageListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.consumer = ActionCable.createConsumer(`ws://localhost:3000/cable`);
+    this.consumer = ActionCable.createConsumer(`ws://localhost:3001/cable`);
     this.channel = this.consumer.subscriptions.create('ChatChannel', {
       connected() {
         console.log("connected");
