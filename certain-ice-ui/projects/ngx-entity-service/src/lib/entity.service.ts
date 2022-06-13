@@ -105,14 +105,21 @@ export abstract class EntityService<T extends Entity> {
    * Create and then initialise an entity object.
    *
    * @param json The json data used to initialise the entity
-   * @param constructorParams Any other data to be passed to the entity. This comes from the map params in the request options, or the
-   *              default mapping params from the service.
    * @param mapping An optional mapping to use for the entity. When no mapping is provided, the default mapping is used.
+   * @param options Any request options - to get the constructor params or mapping callback functions.
    * @returns a new instance of the entity, initialised with the json data.
    */
-  public buildInstance(json: object, constructorParams?: any, mapping?: EntityMapping<T>): T {
+  public buildInstance(json: object, options?: RequestOptions<T>): T {
+    // Get the mapping, constructorParams, and mapping callback from the request options, or mapping
+    const mapping = this.mappingFor(options);
+    const constructorParams = options?.constructorParams || mapping.constructorParams;
+    const mappingCompleteCallback = options?.mappingCompleteCallback || mapping.mappingCompleteCallback;
+
+    // Create the entity
     const result = this.createInstanceFrom(json, constructorParams);
-    result.updateFromJson(json, mapping || this.mapping);
+
+    // Perform the mapping
+    result.updateFromJson(json, mapping, mappingCompleteCallback);
     return result;
   }
 
@@ -136,7 +143,7 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) =>
-            this.buildInstance(rawData, options?.constructorParams || this.mapping.constructorParams, this.mappingFor(options))
+            this.buildInstance(rawData, options)
         )
       ); // Turn the raw JSON returned into the object T
   }
@@ -155,7 +162,7 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) => {
-            const result = this.convertCollection(rawData instanceof Array ? rawData : [rawData], options?.mapping?.constructorParams || this.mapping.constructorParams, this.mappingFor(options))
+            const result = this.convertCollection(rawData instanceof Array ? rawData : [rawData], options)
             return result;
           }
         )
@@ -186,7 +193,11 @@ export abstract class EntityService<T extends Entity> {
     return this.put<T>(entity, options).pipe(
       map(
         (rawData) => {
-          responseEntity.updateFromJson(rawData, this.mappingFor(options));
+          // Get the mapping, and mapping callback from the request options, or mapping
+          const mapping = this.mappingFor(options);
+          const mappingCompleteCallback = options?.mappingCompleteCallback || mapping.mappingCompleteCallback;
+
+          responseEntity.updateFromJson(rawData, mapping, mappingCompleteCallback);
           return responseEntity;
         }
       )
@@ -226,7 +237,7 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) =>
-            this.buildInstance(rawData, options?.constructorParams || this.mapping.constructorParams, this.mappingFor(options))
+            this.buildInstance(rawData, options)
         )
       );
   }
@@ -246,7 +257,11 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) => {
-            entity.updateFromJson(rawData, this.mappingFor(options));
+            // Get the mapping, and mapping callback from the request options, or mapping
+            const mapping = this.mappingFor(options);
+            const mappingCompleteCallback = options?.mappingCompleteCallback || mapping.mappingCompleteCallback;
+
+            entity.updateFromJson(rawData, mapping, mappingCompleteCallback);
             return entity;
           }
         )
@@ -291,10 +306,10 @@ export abstract class EntityService<T extends Entity> {
    * from the server.
    * @returns {T[]} The array of Objects
    */
-  private convertCollection(collection: any, constructorParams: any, mapping: EntityMapping<T>): T[] {
+  private convertCollection(collection: any, options?: RequestOptions<T>): T[] {
     return collection.map((
       data: any) => {
-        const result = this.buildInstance(data, constructorParams, mapping);
+        const result = this.buildInstance(data, options);
         return result;
       });
   }

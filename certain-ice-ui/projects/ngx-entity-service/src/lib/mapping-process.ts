@@ -13,6 +13,7 @@ export class MappingProcess<T extends Entity> {
   public entity: T;
   public data: object;
   private index: number;
+  private onCompleteCallback?: (entity: T) => void;
 
   /**
    * Construct a mapping process for the provided mapping data, entity, and json.
@@ -20,11 +21,12 @@ export class MappingProcess<T extends Entity> {
    * @param entity the entity to populate
    * @param data the json data to map
    */
-  constructor(plan: EntityMapping<T>, entity: T, data: object) {
+  constructor(plan: EntityMapping<T>, entity: T, data: object, onCompletionCallback?: (entity: T) => void) {
     this.plan = plan;
     this.entity = entity;
     this.data = data;
     this.index = 0;
+    this.onCompleteCallback = onCompletionCallback;
   }
 
   /**
@@ -73,6 +75,10 @@ export class MappingProcess<T extends Entity> {
 
       // Move to next index
       this.index++;
+    }
+
+    if (this.index >= this.plan.keys.length && this.onCompleteCallback) {
+      this.onCompleteCallback(this.entity);
     }
   }
 

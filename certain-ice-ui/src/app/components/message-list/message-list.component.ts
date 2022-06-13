@@ -40,7 +40,7 @@ export class MessageListComponent implements OnInit {
       received: (msgContent: any) => ( console.log(msgContent))
     });
 
-    this.messageService.query( ).subscribe(
+    this.messageService.query(undefined, {mappingCompleteCallback: (entity: Message) => console.log("Finished mapping message")}).subscribe(
       (messages: Message[]) => {
         console.log(messages);
       }

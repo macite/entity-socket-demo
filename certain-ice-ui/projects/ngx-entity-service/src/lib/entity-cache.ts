@@ -142,15 +142,16 @@ export class EntityCache<T extends Entity> {
    * @param key the key for the entity to find or create (must also be present in the data in case of object creation)
    * @param service the service associated with the creation of these entities
    * @param data the json data to pass to the object when created
-   * @param mapParams the map params to pass to the object when created
+   * @param options any request options needed to pass data to the entity construction process (eg constructorParams and mappingCompleteCallback)
    * @returns
    */
-  public getOrCreate(key: string, service: EntityService<T>, data: object, mapParams?: any): T {
+  public getOrCreate(key: string, service: EntityService<T>, data: object, options?: RequestOptions<T>): T {
     let entity: T;
     if ( this.has(key) ) {
       entity = this.get(key) as T;
     } else {
-      entity = service.buildInstance(data, mapParams);
+      // Create the instance with no request options, using the mapping parameters
+      entity = service.buildInstance(data, options);
       this.add(entity);
     }
 

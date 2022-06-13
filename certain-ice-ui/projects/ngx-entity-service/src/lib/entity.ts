@@ -33,8 +33,8 @@ export abstract class Entity {
    * @param data    The json object containing the data to copy into the entity.
    * @param params  Additional paramters needed for reference during updating
    */
-  public updateFromJson<T extends Entity>(data: any, mappingData: EntityMapping<T>): void {
-    mappingData.updateEntityFromJson((this as unknown) as T, data);
+  public updateFromJson<T extends Entity>(data: any, mappingData: EntityMapping<T>, onCompleteCallback?: (entity: T) => void): void {
+    mappingData.updateEntityFromJson((this as unknown) as T, data, onCompleteCallback);
   }
 
   /**

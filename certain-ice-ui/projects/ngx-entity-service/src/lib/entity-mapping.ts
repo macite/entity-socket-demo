@@ -61,6 +61,12 @@ export class EntityMapping<T extends Entity> {
   public constructorParams?: any;
 
   /**
+   * Call this upon completion of the mapping process. This is useful when the mapping involved asynchronous operations
+   * and the caller needed to know when the mapping is complete.
+   */
+  public mappingCompleteCallback?: (entity: T) => void;
+
+  /**
    * Map the key to the indicated case
    *
    * @param key the key string to map
@@ -190,10 +196,10 @@ export class EntityMapping<T extends Entity> {
    * @param entity the entity to update
    * @param data  the new data to be stored within the entity
    */
-  public updateEntityFromJson(entity: T, data: any): void {
+  public updateEntityFromJson(entity: T, data: any, onCompleteCallback?: (entity: T) => void): void {
     if (!data || !entity) return;
 
-    const plan = new MappingProcess<T>(this, entity, data);
+    const plan = new MappingProcess<T>(this, entity, data, onCompleteCallback);
     plan.execute();
   }
 

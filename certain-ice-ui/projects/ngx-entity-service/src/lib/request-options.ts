@@ -85,4 +85,10 @@ export interface RequestOptions<T extends Entity> {
    * the constructorParams value from the EntityMapping.
    */
   constructorParams?: any;
+
+  /**
+   * Optional callback to call when each entity object mapping has completed. This is useful when using
+   * asynchronous operations in the mapping process.
+   */
+  mappingCompleteCallback?: (entity: T) => void;
 }
