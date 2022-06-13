@@ -79,4 +79,10 @@ export interface RequestOptions<T extends Entity> {
    * otherwise it will return those from the `previousQuery`.
    */
   onCacheHitReturn?: 'all' | 'previousQuery';
+
+  /**
+   * Optional constructor parameters to be passed to entity object created from the call. This overrides
+   * the constructorParams value from the EntityMapping.
+   */
+  constructorParams?: any;
 }

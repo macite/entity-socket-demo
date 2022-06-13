@@ -25,7 +25,7 @@ export class MessageListComponent implements OnInit {
     this.messageKinds.set('test', new MessageKind('test'));
 
     // Could also be in the service...
-    messageService.mapping.params = this.messageKinds;
+    messageService.mapping.constructorParams = this.messageKinds;
   }
 
   ngOnInit() {

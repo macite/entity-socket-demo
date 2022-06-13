@@ -58,7 +58,7 @@ export class EntityMapping<T extends Entity> {
   /**
    * Any additional parameters needed to be passed to the entity during mapping.
    */
-  public params?: any;
+  public constructorParams?: any;
 
   /**
    * Map the key to the indicated case

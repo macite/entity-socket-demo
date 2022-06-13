@@ -51,24 +51,24 @@ export class MappingProcess<T extends Entity> {
       const jsonKey = keyPair.jsonKey;
       const entityKey = keyPair.entityKey;
 
-      // If there is no data in the json, skip to this key
-      if (jsonKey in this.data === false) continue;
-
-      // Run map operations as priority
-      if (this.plan.mapOperations.toEntity[entityKey]) {
-        const op = this.plan.mapOperations.toEntity[entityKey];
-        if (op.kind === "async") {
-          op.fn(this);
-          return; // end the loop as we cannot continue now...
+      // Map this key if it is in json
+      if (jsonKey in this.data) {
+        // Run map operations as priority
+        if (this.plan.mapOperations.toEntity[entityKey]) {
+          const op = this.plan.mapOperations.toEntity[entityKey];
+          if (op.kind === "async") {
+            op.fn(this);
+            return; // end the loop as we cannot continue now...
+          } else {
+            op.fn(this.data, entityKey, this.entity, this.plan.constructorParams);
+          }
+        } else if (this.plan.mapFunctions.toEntity[entityKey]) {
+          // Run mapping function....
+          this.entity[entityKey] = this.plan.mapFunctions.toEntity[entityKey](this.data, entityKey, this.entity, this.plan.constructorParams);
         } else {
-          op.fn(this.data, entityKey, this.entity, this.plan.params);
+          // or just copy in the data
+          this.entity[entityKey] = this.data[jsonKey];
         }
-      } else if (this.plan.mapFunctions.toEntity[entityKey]) {
-        // Run mapping function....
-        this.entity[entityKey] = this.plan.mapFunctions.toEntity[entityKey](this.data, entityKey, this.entity, this.plan.params);
-      } else {
-        // or just copy in the data
-        this.entity[entityKey] = this.data[jsonKey];
       }
 
       // Move to next index

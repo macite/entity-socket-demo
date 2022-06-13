@@ -42,7 +42,9 @@ export class MessageService extends CachedEntityService<Message> {
     this.mapping.mapAllKeysToJsonExcept('id');
   }
 
-  protected override createInstanceFrom(json: any, other?: any): Message {
+  protected override createInstanceFrom(json: any, constructorParams?: any): Message {
+    console.log("I got... which I could use when creating the Message");
+    console.log(constructorParams);
     const message = new Message();
     return message;
   }

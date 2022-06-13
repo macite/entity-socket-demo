@@ -27,7 +27,7 @@ export class UserService extends CachedEntityService<User> {
     this.mapping.mapAllKeysToJsonExcept('id');
   }
 
-  public override createInstanceFrom(json: any, other?: any): User {
+  public override createInstanceFrom(json: any, constructorParams?: any): User {
     const user = new User();
     return user;
   }

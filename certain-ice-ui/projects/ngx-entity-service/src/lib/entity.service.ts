@@ -97,20 +97,22 @@ export abstract class EntityService<T extends Entity> {
    * Convert accepted data to @class Entity object
    *
    * @param json The json data to convert to T
+   * @param constructorParams the data to be passed to the object construcrtor when creating the entity.
    */
-  protected abstract createInstanceFrom(json: any, other?: any): T;
+  protected abstract createInstanceFrom(json: any, constructorParams?: any): T;
 
   /**
    * Create and then initialise an entity object.
    *
    * @param json The json data used to initialise the entity
-   * @param other Any other data to be passed to the entity. This comes from the map params in the request options, or the
+   * @param constructorParams Any other data to be passed to the entity. This comes from the map params in the request options, or the
    *              default mapping params from the service.
+   * @param mapping An optional mapping to use for the entity. When no mapping is provided, the default mapping is used.
    * @returns a new instance of the entity, initialised with the json data.
    */
-  public buildInstance(json: object, other?: any): T {
-    const result = this.createInstanceFrom(json, other);
-    result.updateFromJson(json, this.mapping);
+  public buildInstance(json: object, constructorParams?: any, mapping?: EntityMapping<T>): T {
+    const result = this.createInstanceFrom(json, constructorParams);
+    result.updateFromJson(json, mapping || this.mapping);
     return result;
   }
 
@@ -134,7 +136,7 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) =>
-            this.buildInstance(rawData, this.mappingFor(options))
+            this.buildInstance(rawData, options?.constructorParams || this.mapping.constructorParams, this.mappingFor(options))
         )
       ); // Turn the raw JSON returned into the object T
   }
@@ -153,7 +155,7 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) => {
-            const result = this.convertCollection(rawData instanceof Array ? rawData : [rawData], this.mappingFor(options))
+            const result = this.convertCollection(rawData instanceof Array ? rawData : [rawData], options?.mapping?.constructorParams || this.mapping.constructorParams, this.mappingFor(options))
             return result;
           }
         )
@@ -224,7 +226,7 @@ export abstract class EntityService<T extends Entity> {
       .pipe(
         map(
           (rawData) =>
-            this.buildInstance(rawData, this.mappingFor(options))
+            this.buildInstance(rawData, options?.constructorParams || this.mapping.constructorParams, this.mappingFor(options))
         )
       );
   }
@@ -289,10 +291,10 @@ export abstract class EntityService<T extends Entity> {
    * from the server.
    * @returns {T[]} The array of Objects
    */
-  private convertCollection(collection: any, mapping: EntityMapping<T>): T[] {
+  private convertCollection(collection: any, constructorParams: any, mapping: EntityMapping<T>): T[] {
     return collection.map((
       data: any) => {
-        const result = this.buildInstance(data, mapping);
+        const result = this.buildInstance(data, constructorParams, mapping);
         return result;
       });
   }

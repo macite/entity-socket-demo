@@ -305,4 +305,14 @@ export class EntityCache<T extends Entity> {
       observer.next(data?.response);
     });
   }
+
+  /**
+   * Iterate over all of the elements in the cache.
+   *
+   * @param fn the function to call for each element in the cache
+   * @param thisArg Value to use as `this` when executing callback.
+   */
+  public forEach(fn: (value: T, key: string, map: Map<string, T>) => void, thisArg?: any): void {
+    return this.cache.forEach(fn, thisArg)
+  }
 }
