@@ -152,7 +152,7 @@ export class EntityCache<T extends Entity> {
     } else {
       // Create the instance with no request options, using the mapping parameters
       entity = service.buildInstance(data, options);
-      this.add(entity);
+      this.set(key, entity);
     }
 
     return entity;
