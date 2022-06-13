@@ -147,9 +147,6 @@ export class EntityCache<T extends Entity> {
    */
   public getOrCreate(key: string | number, service: EntityService<T>, data: object, options?: RequestOptions<T>): T {
     let entity: T;
-    if (typeof (key as unknown) !== "string") {
-      key = (key as any).toString();
-    }
     if ( this.has(key) ) {
       entity = this.get(key) as T;
     } else {
