@@ -66,7 +66,7 @@ export class EntityCache<T extends Entity> {
   /**
    * The data store for the cache.
    */
-  private cache: Map<string, T> = new Map<string, T>();
+  private cache: Map<string | number, T> = new Map<string | number, T>();
 
   /**
    * All of the queries made to the server, and their associated responses.
@@ -109,7 +109,7 @@ export class EntityCache<T extends Entity> {
    * @param key the key for the entity
    * @returns the entity associated with the key, or undefined if not found.
    */
-  public get(key: string) : T | undefined {
+  public get(key: string | number) : T | undefined {
     return this.cache.get(key);
   }
 
@@ -119,7 +119,7 @@ export class EntityCache<T extends Entity> {
    * @param key the key for the entity to check.
    * @returns true if the cache contains an entity with that key
    */
-  public has(key: string) : boolean {
+  public has(key: string | number) : boolean {
     return this.cache.has(key);
   }
 
@@ -145,8 +145,11 @@ export class EntityCache<T extends Entity> {
    * @param options any request options needed to pass data to the entity construction process (eg constructorParams and mappingCompleteCallback)
    * @returns
    */
-  public getOrCreate(key: string, service: EntityService<T>, data: object, options?: RequestOptions<T>): T {
+  public getOrCreate(key: string | number, service: EntityService<T>, data: object, options?: RequestOptions<T>): T {
     let entity: T;
+    if (typeof (key as unknown) !== "string") {
+      key = (key as any).toString();
+    }
     if ( this.has(key) ) {
       entity = this.get(key) as T;
     } else {
@@ -178,7 +181,7 @@ export class EntityCache<T extends Entity> {
    * @param key the key for the entity to store
    * @param entity the entity to store in the cache
    */
-  public set(key: string, entity: T): void {
+  public set(key: string | number, entity: T): void {
     this.cache.set(key, entity);
 
     if ( !this.dontAnnounce ) {
@@ -192,9 +195,9 @@ export class EntityCache<T extends Entity> {
    * @param entity is either the key of entity, or the entity itself, to remove from cache
    * @returns true on success
    */
-  public delete(entity: string | T) : boolean {
-    let key: string;
-    if ( typeof entity === "string" ) {
+  public delete(entity: string | number | T) : boolean {
+    let key: string | number;
+    if ( typeof entity === "string" || typeof entity === "number" ) {
       key = entity;
     } else {
       key = entity.key;
@@ -313,7 +316,7 @@ export class EntityCache<T extends Entity> {
    * @param fn the function to call for each element in the cache
    * @param thisArg Value to use as `this` when executing callback.
    */
-  public forEach(fn: (value: T, key: string, map: Map<string, T>) => void, thisArg?: any): void {
+  public forEach(fn: (value: T, key: string | number, map: Map<string | number, T>) => void, thisArg?: any): void {
     return this.cache.forEach(fn, thisArg)
   }
 }

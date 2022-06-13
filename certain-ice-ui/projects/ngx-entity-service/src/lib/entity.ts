@@ -39,11 +39,11 @@ export abstract class Entity {
 
   /**
    * Gets the unique key which represents the Entity. By default this returns
-   * the string value of the id property.
+   * the value of the id property.
    *
    * @returns string containing the unique key value
    */
-  public get key(): string {
-    return this['id']?.toString() || '';
+  public get key(): string | number {
+    return this['id'];
   }
 }
