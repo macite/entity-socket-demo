@@ -80,7 +80,7 @@ export abstract class EntityService<T extends Entity> {
    */
   private bodyFor(pathIds: object | T | any, options?: RequestOptions<T>): FormData | object | undefined {
     const mapping = this.mappingFor(options);
-    return options?.body || options?.entity?.toJson(mapping, options?.ignoreKeys) || typeof pathIds.toJson === 'function' ? pathIds.toJson(mapping) : pathIds;
+    return options?.body || options?.entity?.toJson(mapping, options?.ignoreKeys) || (typeof pathIds.toJson === 'function' ? pathIds.toJson(mapping) : pathIds);
   }
 
   /**
