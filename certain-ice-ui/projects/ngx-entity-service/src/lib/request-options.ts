@@ -47,9 +47,23 @@ export interface RequestOptions<T extends Entity> {
   body?: FormData | any;
 
   /**
-   * Overrides the global cache for this particular request, if a cache is used.
+   * Overrides the global cache for this particular request, if a cache is used. Results will
+   * be saved back into this cache.
+   *
+   * If a `sourceCache` is provided, that will be used to find entities if an entity needs to be
+   * created, the result would then be stored in into this cache. This allows responses to be
+   * mapped to existing entities that exist elsewhere, and to establish relationships with
+   * these existing entities.
    */
   cache?: EntityCache<T>;
+
+  /**
+   * Look for entities in this cache, if an instance needs to be built. This allows simple relationships
+   * to be established where the object already exists within a cache. For examples, the recipients of a
+   * message could be users. The json returns the id of the users, and the source cache can then be set
+   * to the user cache to retrieve the user object to be stored within the authors cache.
+   */
+  sourceCache?: EntityCache<T>;
 
   /**
    * The entity to use in the call.

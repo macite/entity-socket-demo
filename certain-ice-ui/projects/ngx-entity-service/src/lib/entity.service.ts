@@ -110,13 +110,22 @@ export abstract class EntityService<T extends Entity> {
    * @returns a new instance of the entity, initialised with the json data.
    */
   public buildInstance(json: object, options?: RequestOptions<T>): T {
+    const cache = options?.sourceCache;
+    var result: T;
+
     // Get the mapping, constructorParams, and mapping callback from the request options, or mapping
     const mapping = this.mappingFor(options);
-    const constructorParams = options?.constructorParams || mapping.constructorParams;
     const mappingCompleteCallback = options?.mappingCompleteCallback || mapping.mappingCompleteCallback;
 
-    // Create the entity
-    const result = this.createInstanceFrom(json, constructorParams);
+
+    if (cache && cache.has(this.keyForJson(json))) {
+      result = cache.get(this.keyForJson(json)) as T;
+    } else {
+      const constructorParams = options?.constructorParams || mapping.constructorParams;
+
+      // Create the entity
+      result = this.createInstanceFrom(json, constructorParams);
+    }
 
     // Perform the mapping
     result.updateFromJson(json, mapping, mappingCompleteCallback);
@@ -309,9 +318,9 @@ export abstract class EntityService<T extends Entity> {
   private convertCollection(collection: any, options?: RequestOptions<T>): T[] {
     return collection.map((
       data: any) => {
-        const result = this.buildInstance(data, options);
-        return result;
-      });
+      const result = this.buildInstance(data, options);
+      return result;
+    });
   }
 
   /**
