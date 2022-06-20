@@ -43,8 +43,6 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
       return pathIds.key;
     } else if (typeof pathIds === 'object' && this.keyName in pathIds) {
       return pathIds[this.keyName].toString();
-    } else if (typeof pathIds === 'number') {
-      return pathIds.toString();
     } else {
       return pathIds;
     }
