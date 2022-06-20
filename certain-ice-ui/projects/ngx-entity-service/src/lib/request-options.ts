@@ -95,6 +95,32 @@ export interface RequestOptions<T extends Entity> {
   onQueryCacheReturn?: 'all' | 'previousQuery';
 
   /**
+   * This allows you to specify how a cache works in the context of a get reqiuest
+   * where there are already entities in the cache.
+   *
+   * If set to `cacheQuery` then a get will use the query path to determine
+   * what to return - if the query has not been run then it will make the get
+   * request and return the result. If the query has been run then it will
+   * return the result from the cache. This will mean that the get request
+   * may occur even if the object is already in the cache.
+   *
+   * If set to `cacheEntity` then the get request will only occur if the
+   * entity is not in the cache. Even if the specific get request has not
+   * been performed.
+   *
+   * For example, if you `query` a cache and populate it with many objects
+   * the behaviour of the cache will now differ if you get a single entity.
+   * If you run `get(1)`, then with `cacheQuery` this will see that you have
+   * not run the get request with the 1 parameter, and so it will perform the
+   * get and update the cached entity with the response. When set to
+   * `cacheEntity`, the entity will be returned from the cache and no additional
+   * get request will be made.
+   *
+   * The default is `cacheEntity`.
+   */
+  cacheBehaviourOnGet?: 'cacheQuery' | 'cacheEntity';
+
+  /**
    * Optional constructor parameters to be passed to entity object created from the call. This overrides
    * the constructorParams value from the EntityMapping.
    */

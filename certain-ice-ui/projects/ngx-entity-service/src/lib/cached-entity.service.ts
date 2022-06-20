@@ -58,7 +58,14 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    * @returns a query string with the path and parameters
    */
   private queryKey(pathIds: any, options?: RequestOptions<T>): string {
+    const object = { ...pathIds };
+    if (typeof pathIds === 'number' || typeof pathIds === 'string') {
+      object[this.keyName] = pathIds;
+    }
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
+
+    const params = options?.params ? `?${new HttpParams({fromObject: options?.params} as HttpParamsOptions).toString()}` : '';
+    return path + params;
   }
 
   /**
@@ -88,7 +95,7 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    */
    public fetchAll(pathIds?: object, options?: RequestOptions<T>): Observable<T[]> {
     const cache = this.cacheFor(options);
-    return cache.registerQuery(this.queryKey(pathIds, options), super.query(pathIds, options));
+    return cache.registerQuery(this.queryKey(pathIds, options), super.query(pathIds, options), options);
   }
 
   /**
@@ -130,6 +137,18 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
   }
 
   /**
+   * How to deal with get requests where there is an entity already in the cache.
+   * When set to `cacheEntity` the entity will be returned from the cache, and no get request performed.
+   * When set to `cacheQuery` it will check if that specific query has been made before, and then either
+   * return the cached query response, or make a get request to the server.
+   */
+  protected cacheBehaviourOnGet: 'cacheQuery' | 'cacheEntity' = 'cacheEntity';
+
+  private cacheBehaviourOnGetFor(options?: RequestOptions<T>): 'cacheQuery' | 'cacheEntity' {
+    return options?.cacheBehaviourOnGet || this.cacheBehaviourOnGet;
+  }
+
+  /**
    * First, tries to retrieve from cache, the object with the id, or id field from the pathIds.
    * If found, return the item from cache, otherwise make a get request to the end point,
    * using the supplied parameters to determine path. Caches the returned object
@@ -142,11 +161,15 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
   public get(pathIds: any, options?: RequestOptions<T>): Observable<T> {
     const cache = this.cacheFor(options);
     const queryKey = this.queryKey(pathIds, options);
+    const behaviour = this.cacheBehaviourOnGetFor(options);
+    const key: string = this.keyFromPathIds(pathIds);
 
     // Have we run this query?
-    if (cache.ranQuery(queryKey) ) {
+    if (behaviour === 'cacheQuery' && cache.ranQuery(queryKey)) {
       // Return the cached result
       return cache.observerForGet(queryKey, options);
+    } else if (behaviour === 'cacheEntity' && cache.has(key)) {
+      return new Observable((observer: any) => observer.next(cache.get(key)));
     } else {
       // We haven't run this query, so run it and cache the result
       return super.get(pathIds, options).pipe(
@@ -154,12 +177,12 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
           // We have a new response object... but is it already in the cache?
           if (cache.has(responseEntity.key)) {
             // Dont use response entity! We want to return the cached version.
-            const cachedEntity = cache.get(responseEntity.key);
-            // Update the cached version with the details frm the response.
+            const cachedEntity = cache.get(responseEntity.key) as T;
+            // Update the cached version with the details from the response.
             Object.assign(cachedEntity, responseEntity);
-            return cachedEntity as T;
+            return cachedEntity;
           } else {
-            cache.set(responseEntity.key, responseEntity);
+            cache.add(responseEntity);
             return responseEntity;
           }
         })
