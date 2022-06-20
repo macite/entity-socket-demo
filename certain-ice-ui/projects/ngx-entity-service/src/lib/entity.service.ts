@@ -139,11 +139,11 @@ export abstract class EntityService<T extends Entity> {
    *                with keys the match the placeholders within the endpointFormat string.
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
-  public get(pathIds: number | object, options?: RequestOptions<T>): Observable<T>;
+  public get(pathIds: number | string | object, options?: RequestOptions<T>): Observable<T>;
   public get(pathIds: any, options?: RequestOptions<T>): Observable<T> {
     const object = { ...pathIds };
-    if (typeof pathIds === 'number') {
-      object['id'] = pathIds;
+    if (typeof pathIds === 'number' || typeof pathIds === 'string') {
+      object[this.keyName] = pathIds;
     }
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
 
@@ -299,11 +299,11 @@ export abstract class EntityService<T extends Entity> {
    *                with keys the match the placeholders within the endpointFormat string.
    * @param options Optional http options
    */
-  public delete(pathIds: number | object, options?: RequestOptions<T>): Observable<object>;
+  public delete(pathIds: number | string | object, options?: RequestOptions<T>): Observable<object>;
   public delete(pathIds: any, options?: RequestOptions<T>): Observable<object> {
     const object = { ...pathIds };
-    if (typeof pathIds === 'number') {
-      object['id'] = pathIds;
+    if (typeof pathIds === 'number' || typeof pathIds === 'string') {
+      object[this.keyName] = pathIds;
     }
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
 
@@ -326,12 +326,21 @@ export abstract class EntityService<T extends Entity> {
   /**
    * Gets the unique key for an entity of type @class Entity.
    * This is used to identify the object within a cache.
-   * This defaults to 'id', but can be overriden to change this behaviour.
+   * This uses `keyName` which defaults to 'id', but can
+   * be overriden to change this behaviour.
    *
    * @param json The json object to get the key from
    * @returns string containing the unique key value
    */
   public keyForJson(json: any): string {
-    return json.id;
+    return json[this.keyName];
+  }
+
+  /**
+   * Gets the name of the property used for the unique key in the entity associated
+   * with this service.
+   */
+  public get keyName(): string {
+    return 'id';
   }
 }
