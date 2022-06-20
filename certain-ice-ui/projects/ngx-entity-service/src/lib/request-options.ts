@@ -87,12 +87,12 @@ export interface RequestOptions<T extends Entity> {
   ignoreKeys?: string[];
 
   /**
-   * When fetching from the cache, should the query return all entity objects from the
-   * current cache or only the entity objects previously returned in the query. If nothing
+   * When a query can be read from the cache, should the query return all entity objects from the
+   * current cache or only the entity objects previously returned in the query? If nothing
    * is provided, the default response will return `all` values if there is no pathIds + parameters,
    * otherwise it will return those from the `previousQuery`.
    */
-  onCacheHitReturn?: 'all' | 'previousQuery';
+  onQueryCacheReturn?: 'all' | 'previousQuery';
 
   /**
    * Optional constructor parameters to be passed to entity object created from the call. This overrides

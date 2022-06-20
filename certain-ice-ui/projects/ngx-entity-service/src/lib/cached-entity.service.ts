@@ -58,9 +58,7 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    * @returns a query string with the path and parameters
    */
   private queryKey(pathIds: any, options?: RequestOptions<T>): string {
-    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, pathIds);
-    const params = options?.params ? new HttpParams({fromObject: options?.params} as HttpParamsOptions) : undefined;
-    return path + params?.toString();
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
   }
 
   /**

@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable, Subject } from "rxjs";
-import { tap } from "rxjs/operators";
+import { map, tap } from "rxjs/operators";
 import { Entity } from "./entity";
 import { EntityService } from "./entity.service";
 import { RequestOptions } from "./request-options";
@@ -232,7 +232,7 @@ export class EntityCache<T extends Entity> {
    * @param response the observer of the data returned from the query
    * @returns the observer of the response
    */
-  public registerQuery(pathKey: string, response: Observable<T[]>): Observable<T[]> {
+  public registerQuery(pathKey: string, response: Observable<T[]>, options?: RequestOptions<T>): Observable<T[]> {
     return response.pipe(
       tap((entityList) => {
         // Dont announce all intermediate changes... just the final one.
@@ -246,6 +246,15 @@ export class EntityCache<T extends Entity> {
         // Finished... so now announce all changes.
         this.dontAnnounce = false;
         this.cacheSubject.next(this.currentValues);
+      }),
+
+      // Map the response based on the cache hit return value
+      map((entityList) => {
+        if ( options?.onQueryCacheReturn === "all" ) {
+          return this.currentValues;
+        } else {
+          return entityList;
+        }
       })
     );
   }
@@ -284,7 +293,7 @@ export class EntityCache<T extends Entity> {
     const cache = this.cache;
 
     return new Observable((observer: any) => {
-      if (options?.onCacheHitReturn === 'all' || (options?.onCacheHitReturn === undefined && !options?.params?.toString().length)) {
+      if (options?.onQueryCacheReturn === 'all' || (options?.onQueryCacheReturn === undefined && !options?.params?.toString().length)) {
         observer.next([...cache.values()]);
       } else {
         observer.next(data?.response);

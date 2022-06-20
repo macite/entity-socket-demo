@@ -29,10 +29,10 @@ export class UserListComponent implements OnInit {
      }
 
     if (all) {
-      options.onCacheHitReturn = 'all';
+      options.onQueryCacheReturn = 'all';
     }
 
-    this.userService.fetchAll(undefined, options).subscribe(
+    this.userService.query(undefined, options).subscribe(
       (users: User[]) => {
         this.users.length = 0;
         this.users.push(...users);
