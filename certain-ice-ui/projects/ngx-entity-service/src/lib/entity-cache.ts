@@ -306,17 +306,25 @@ export class EntityCache<T extends Entity> {
    * @param options any options the accompany the query
    * @returns an observer with the required objects
    */
-  public observerFor(queryKey: string, options?: RequestOptions<T>): Observable<T[]> {
+  public observerFor(queryKey: string, options?: RequestOptions<T>, onCompleteCallback?: (entity: T) => void): Observable<T[]> {
     const data : QueryData<T> | undefined = this.queryKeys.get(queryKey);
     const cache = this.cache;
+    var response: T[];
 
-    return new Observable((observer: any) => {
-      if (options?.onQueryCacheReturn === 'all' || (options?.onQueryCacheReturn === undefined && !options?.params?.toString().length)) {
-        observer.next([...cache.values()]);
-      } else {
-        observer.next(data?.response);
+    if (options?.onQueryCacheReturn === 'all' || (options?.onQueryCacheReturn === undefined && !options?.params?.toString().length)) {
+      response = [...cache.values()];
+    } else {
+      response = data?.response as T[];
+    }
+
+    // Perform callback for all entities in response
+    if ( onCompleteCallback ) {
+      for(const entity of response) {
+        onCompleteCallback(entity);
       }
-    });
+    }
+
+    return new Observable((observer: any) => { observer.next(response);});
   }
 
   /**
@@ -326,8 +334,13 @@ export class EntityCache<T extends Entity> {
    * @param options any options the accompany the query
    * @returns an observer with the required objects
    */
-   public observerForGet(queryKey: string, options?: RequestOptions<T>): Observable<T> {
+   public observerForGet(queryKey: string, onCompleteCallback?: (entity: T) => void ): Observable<T> {
     const data : QueryData<T> | undefined = this.queryKeys.get(queryKey);
+
+    // Mapping is complete as we have entity in cache
+    if (onCompleteCallback) {
+      onCompleteCallback(data?.response as T);
+    }
 
     return new Observable((observer: any) => {
       observer.next(data?.response);

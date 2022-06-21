@@ -111,8 +111,11 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
   public query(pathIds?: object, options?: RequestOptions<T>): Observable<T[]> {
     const cache = this.cacheFor(options);
     const queryKey = this.queryKey(pathIds, options);
+
     if (cache.ranQuery(queryKey) ) {
-      return cache.observerFor(queryKey, options);
+      // Ensure callback on get from cache
+      const onCompleteCallback = options?.mappingCompleteCallback || this.mapping.mappingCompleteCallback;
+      return cache.observerFor(queryKey, options, onCompleteCallback);
     } else {
       return this.fetchAll(pathIds, options);
     }
@@ -162,12 +165,21 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
     const behaviour = this.cacheBehaviourOnGetFor(options);
     const key: string = this.keyFromPathIds(pathIds);
 
+    const onCompleteCallback = options?.mappingCompleteCallback || this.mapping.mappingCompleteCallback;
+
     // Have we run this query?
     if (behaviour === 'cacheQuery' && cache.ranQuery(queryKey)) {
       // Return the cached result
-      return cache.observerForGet(queryKey, options);
+      return cache.observerForGet(queryKey, onCompleteCallback);
     } else if (behaviour === 'cacheEntity' && cache.has(key)) {
-      return new Observable((observer: any) => observer.next(cache.get(key)));
+      const entity: T = cache.get(key) as T;
+
+      // Assume the mapping is complete as we have entity in cache
+      if (onCompleteCallback) {
+        onCompleteCallback(entity);
+      }
+
+      return new Observable((observer: any) => observer.next(entity));
     } else {
       // We haven't run this query, so run it and cache the result
       return cache.registerGetQuery(
@@ -175,7 +187,9 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
         super.get(pathIds, options).pipe(
           map((responseEntity: T) => {
             // We have a new response object... but is it already in the cache?
-            // this will only happen if this is called twice concurrently...
+            // this will happen if we are expanding an object that is already in the cache
+            // in which case it is in the cache, but we have not run the query and using
+            // `cacheQuery` behaviour.
             if (cache.has(responseEntity.key)) {
               // Dont use response entity! We want to return the cached version.
               const cachedEntity = cache.get(responseEntity.key) as T;
