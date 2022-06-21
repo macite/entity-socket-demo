@@ -299,15 +299,15 @@ export abstract class EntityService<T extends Entity> {
    *                with keys the match the placeholders within the endpointFormat string.
    * @param options Optional http options
    */
-  public delete(pathIds: number | string | object, options?: RequestOptions<T>): Observable<object>;
-  public delete(pathIds: any, options?: RequestOptions<T>): Observable<object> {
+  public delete<S>(pathIds: number | string | object, options?: RequestOptions<T>): Observable<S>;
+  public delete<S>(pathIds: any, options?: RequestOptions<T>): Observable<S> {
     const object = { ...pathIds };
     if (typeof pathIds === 'number' || typeof pathIds === 'string') {
       object[this.keyName] = pathIds;
     }
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
 
-    return this.httpClient.delete(path, options);
+    return this.httpClient.delete<S>(path, options);
   }
 
   /**

@@ -222,14 +222,14 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
    *                with keys the match the placeholders within the endpointFormat string.
    * @param options Optional http options
    */
-  public delete(pathIds: number | object, options?: RequestOptions<T>): Observable<object>;
-  public delete(pathIds: any, options?: RequestOptions<T>): Observable<object> {
+  public delete<S>(pathIds: number | object, options?: RequestOptions<T>): Observable<S>;
+  public delete<S>(pathIds: any, options?: RequestOptions<T>): Observable<S> {
     const key: string = this.keyFromPathIds(pathIds);
     const cache = this.cacheFor(options);
 
-    return super.delete(pathIds, options).pipe(
+    return super.delete<S>(pathIds, options).pipe(
       // Tap performs a side effect on Observable, but return it identical to the source.
-      tap((response: object) => {
+      tap((response: S) => {
         if (cache.has(key)) {
           cache.delete(key);
         }
