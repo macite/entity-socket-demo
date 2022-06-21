@@ -1,4 +1,4 @@
-import { BehaviorSubject, Observable, Subject } from "rxjs";
+import { BehaviorSubject, Observable, of, Subject } from "rxjs";
 import { map, tap } from "rxjs/operators";
 import { Entity } from "./entity";
 import { EntityService } from "./entity.service";
@@ -324,7 +324,7 @@ export class EntityCache<T extends Entity> {
       }
     }
 
-    return new Observable((observer: any) => { observer.next(response);});
+    return of(response);
   }
 
   /**
@@ -342,9 +342,7 @@ export class EntityCache<T extends Entity> {
       onCompleteCallback(data?.response as T);
     }
 
-    return new Observable((observer: any) => {
-      observer.next(data?.response);
-    });
+    return of(data?.response as T);
   }
 
   /**

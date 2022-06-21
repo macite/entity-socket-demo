@@ -1,6 +1,6 @@
 import { EntityService } from './entity.service';
 import { Entity } from './entity';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { tap, map } from 'rxjs/operators';
 import { EntityCache } from './entity-cache';
 import { RequestOptions } from './request-options';
@@ -179,7 +179,7 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
         onCompleteCallback(entity);
       }
 
-      return new Observable((observer: any) => observer.next(entity));
+      return of(entity);
     } else {
       // We haven't run this query, so run it and cache the result
       return cache.registerGetQuery(
