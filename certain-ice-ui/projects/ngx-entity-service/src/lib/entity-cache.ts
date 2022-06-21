@@ -26,7 +26,7 @@ class QueryData<T> {
   /**
    * The entity objects that were returned from the query.
    */
-  public response: T[];
+  public response: T | T[];
 
   /**
    * Creates a new QueryData object for the indicated path, time, and response.
@@ -35,7 +35,7 @@ class QueryData<T> {
    * @param ttl the time to live for the query.
    * @param data the response from the query
    */
-  public constructor(pathKey: string, ttl: number, data: T[]) {
+  public constructor(pathKey: string, ttl: number, data: T | T[]) {
     this.pathKey = pathKey;
     this.expireAt = new Date(new Date().getTime() + ttl);
     this.response = data;
@@ -255,6 +255,24 @@ export class EntityCache<T extends Entity> {
         } else {
           return entityList;
         }
+      })
+    );
+  }
+
+  /**
+   * Registers a get query with the cache. The query values will be stored in the cache along
+   * with the query details. If the query is run again then the previous response will be returned.
+   *
+   * @param pathKey the path for the query
+   * @param response the observer of the data returned from the query
+   * @returns the observer of the response
+   */
+   public registerGetQuery(pathKey: string, response: Observable<T>): Observable<T> {
+    return response.pipe(
+      tap((entity) => {
+        this.queryKeys.set(pathKey, new QueryData(pathKey, this.cacheExpiryTime, entity));
+
+        this.set(entity.key, entity);
       })
     );
   }

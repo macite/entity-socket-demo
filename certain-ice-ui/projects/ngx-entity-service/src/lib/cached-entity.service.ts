@@ -170,20 +170,24 @@ export abstract class CachedEntityService<T extends Entity> extends EntityServic
       return new Observable((observer: any) => observer.next(cache.get(key)));
     } else {
       // We haven't run this query, so run it and cache the result
-      return super.get(pathIds, options).pipe(
-        map((responseEntity: T) => {
-          // We have a new response object... but is it already in the cache?
-          if (cache.has(responseEntity.key)) {
-            // Dont use response entity! We want to return the cached version.
-            const cachedEntity = cache.get(responseEntity.key) as T;
-            // Update the cached version with the details from the response.
-            Object.assign(cachedEntity, responseEntity);
-            return cachedEntity;
-          } else {
-            cache.add(responseEntity);
-            return responseEntity;
-          }
-        })
+      return cache.registerGetQuery(
+        queryKey,
+        super.get(pathIds, options).pipe(
+          map((responseEntity: T) => {
+            // We have a new response object... but is it already in the cache?
+            // this will only happen if this is called twice concurrently...
+            if (cache.has(responseEntity.key)) {
+              // Dont use response entity! We want to return the cached version.
+              const cachedEntity = cache.get(responseEntity.key) as T;
+              // Update the cached version with the details from the response.
+              Object.assign(cachedEntity, responseEntity);
+              return cachedEntity;
+            } else {
+              cache.add(responseEntity);
+              return responseEntity;
+            }
+          })
+        )
       );
     }
   }
