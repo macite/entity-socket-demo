@@ -160,6 +160,8 @@ export class EntityCache<T extends Entity> {
 
   /**
    * Return an observable that publishes all changes to the cache.
+   *
+   * This is a long running observable which will need to be unsubscribed!
    */
   public get values() : Observable<T[]> {
     return this.cacheSubject;

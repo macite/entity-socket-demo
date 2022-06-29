@@ -34,6 +34,13 @@ export class EntityMapping<T extends Entity> {
   public jsonKeys: string[] = [];
 
   /**
+   * By default the mapping process will use the `originalJson` from the Entity
+   * to determine if values have changed when mapping an Entity to json. Set this
+   * to false if you want all mapped values to be copied into the json.
+   */
+  public onlyMapChanges: boolean = true;
+
+  /**
    * Mapping functions maps one value betweeen the entity and json. Functions return these
    * values, and store them in the associated property in the entity or json.
    *
@@ -222,16 +229,23 @@ export class EntityMapping<T extends Entity> {
       const jsonKey = hash.jsonKey;
       const entityKey = hash.entityKey;
 
+      const originalJsonProperty = entity.originalJson ? entity.originalJson[jsonKey] : undefined;
+
       // Skip keys we ignore, and those we do not export
       if( (ignoreKeys && ignoreKeys.indexOf(entityKey) !== -1) || this.jsonKeys.indexOf(entityKey) === -1 ) {
         return;
       }
 
+      var newValue: any;
       // Use keys and mapping functions to get the value into json
       if (this.mapFunctions.toJson && this.mapFunctions.toJson[jsonKey]) {
-        json[jsonKey] = this.mapFunctions.toJson[jsonKey](entity, entityKey);
+        newValue = this.mapFunctions.toJson[jsonKey](entity, entityKey);
       } else {
-        json[jsonKey] = entity[entityKey];
+        newValue = entity[entityKey];
+      }
+
+      if (!this.onlyMapChanges || (originalJsonProperty === undefined || originalJsonProperty !== newValue)) {
+        json[jsonKey] = newValue;
       }
     });
     return json;

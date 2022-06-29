@@ -19,6 +19,12 @@ import { EntityMapping } from "./entity-mapping";
 export abstract class Entity {
 
   /**
+   * Retains a copy of the json used to build the entity. This is used when
+   * mapping to json to determine which properties have been updated.
+   */
+  public originalJson: any = undefined;
+
+  /**
    * Convert the entity object to json.
    *
    * @returns A json representation of the entity.
@@ -34,6 +40,12 @@ export abstract class Entity {
    * @param params  Additional paramters needed for reference during updating
    */
   public updateFromJson<T extends Entity>(data: any, mappingData: EntityMapping<T>, onCompleteCallback?: (entity: T) => void): void {
+    if ( this.originalJson ) {
+      Object.assign(this.originalJson, data);
+    } else {
+      this.originalJson = data;
+    }
+
     mappingData.updateEntityFromJson((this as unknown) as T, data, onCompleteCallback);
   }
 
