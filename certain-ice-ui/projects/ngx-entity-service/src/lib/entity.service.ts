@@ -57,17 +57,28 @@ export abstract class EntityService<T extends Entity> {
    */
   protected buildEndpoint(path: string, object?: object): string {
     // Replace any keys with provided values
-    if (object) {
-      for (const key in object) {
-        if (object.hasOwnProperty(key)) {
-          // If the key is undefined, just replace with an empty string.
-          path = path.replace(`:${key}:`, object[key] ? object[key] : '');
+    if ( object ?? false ) {
+      // search for replacement strings /.../:key:/../:key.elem.id:/...
+      const regex = /:(.*?):/g;
+      const subRegex = /([a-zA-Z0-9_$]+)(?=\.)?/g;
+
+      path = path.replace(regex, (match, group) => {
+        if (group) {
+          let result = object;
+          const matches = (group as string).match(subRegex)?.forEach(value => {
+            result = result ? result[value] : undefined;
+          });
+
+          return result ? `${result}` : '';
+        } else {
+          return "";
         }
-      }
+      })
+    } else {
+      // Strip any missed keys
+      path = path.replace(/:[\w-]*?:/, '');
     }
 
-    // Strip any missed keys
-    path = path.replace(/:[\w-]*?:/, '');
     return `${this.apiUrl}/${path}`;
   }
 
