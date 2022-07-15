@@ -128,7 +128,6 @@ export abstract class EntityService<T extends Entity> {
     const mapping = this.mappingFor(options);
     const mappingCompleteCallback = options?.mappingCompleteCallback || mapping.mappingCompleteCallback;
 
-
     if (cache && cache.has(this.keyForJson(json))) {
       result = cache.get(this.keyForJson(json)) as T;
     } else {
@@ -243,7 +242,7 @@ export abstract class EntityService<T extends Entity> {
 
   /**
    * Create a new entity by sending the supplied data to the endpoint, and converting the response to an
-   * entity object.
+   * entity object. See `store` if you want to persist an entity object.
    *
    * @param pathIds An object with keys which match the placeholders within the endpointFormat string.
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
