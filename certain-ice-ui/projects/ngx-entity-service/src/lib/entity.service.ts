@@ -151,10 +151,12 @@ export abstract class EntityService<T extends Entity> {
    */
   public get(pathIds: number | string | object, options?: RequestOptions<T>): Observable<T>;
   public get(pathIds: any, options?: RequestOptions<T>): Observable<T> {
-    const object = { ...pathIds };
+    let object = pathIds;
     if (typeof pathIds === 'number' || typeof pathIds === 'string') {
+      object = { };
       object[this.keyName] = pathIds;
     }
+
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
 
     return this.httpClient
@@ -233,9 +235,8 @@ export abstract class EntityService<T extends Entity> {
    * @param options Optional request options. This can be used to customise headers, parameters, body, or the associated entity object.
    */
   public put<S>(pathIds: object, options?: RequestOptions<T>): Observable<S> {
-    const object = { ...pathIds };
     const json = this.bodyFor(pathIds, options);
-    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, pathIds);
 
     return this.httpClient.put(path, json, options) as Observable<S>;
   }
@@ -249,9 +250,8 @@ export abstract class EntityService<T extends Entity> {
    * @returns {Observable} a new cold observable with the newly created @type {T}
    */
   public create(pathIds: object, options?: RequestOptions<T>): Observable<T> {
-    const object = { ...pathIds };
     const json = this.bodyFor(pathIds, options);
-    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, pathIds);
     return this.httpClient.post(path, json, options)
       .pipe(
         map(
@@ -295,9 +295,8 @@ export abstract class EntityService<T extends Entity> {
    * @returns {Observable} a new cold observable with the newly created @type {T}
    */
   public post<S>(pathIds: object, options?: RequestOptions<T>): Observable<S> {
-    const object = { ...pathIds };
     const json = this.bodyFor(pathIds, options);
-    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
+    const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, pathIds);
 
     return this.httpClient.post(path, json, options) as Observable<S>;
   }
@@ -311,8 +310,9 @@ export abstract class EntityService<T extends Entity> {
    */
   public delete<S>(pathIds: number | string | object, options?: RequestOptions<T>): Observable<S>;
   public delete<S>(pathIds: any, options?: RequestOptions<T>): Observable<S> {
-    const object = { ...pathIds };
+    let object = pathIds;
     if (typeof pathIds === 'number' || typeof pathIds === 'string') {
+      object = {}
       object[this.keyName] = pathIds;
     }
     const path = this.buildEndpoint(options?.endpointFormat || this.endpointFormat, object);
