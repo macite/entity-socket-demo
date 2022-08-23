@@ -1,6 +1,5 @@
-import { HttpHeaders } from "@angular/common/http";
 import { Component, OnInit } from "@angular/core";
-import { RequestOptions } from "dist/ngx-entity-service/lib/request-options";
+import { RequestOptions } from "projects/ngx-entity-service/src/public-api";
 import { User } from "src/app/model/user";
 import { UserService } from "src/app/services/user.service";
 
@@ -22,20 +21,18 @@ export class UserListComponent implements OnInit {
   }
 
   public refreshData(value?: string, all: boolean = false) {
-    let params : RequestOptions<User> = {};
+    let options : RequestOptions<User> = {};
     if (value) {
-      params = {
-        params : {
+      options.params = {
          'filter' : value
-        }
+        };
      }
-    }
 
     if (all) {
-      params.onCacheHitReturn = 'all';
+      options.onQueryCacheReturn = 'all';
     }
 
-    this.userService.fetchAll(undefined, params).subscribe(
+    this.userService.query(undefined, options).subscribe(
       (users: User[]) => {
         this.users.length = 0;
         this.users.push(...users);

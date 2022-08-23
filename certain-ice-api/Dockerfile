@@ -8,7 +8,8 @@ RUN gem install bundler
 COPY ./Gemfile ./Gemfile.lock /api/
 RUN bundle install
 
-EXPOSE 3000
+EXPOSE 3001
 
 ENV RAILS_ENV development
-CMD bundle exec rake db:migrate && bundle exec rails s -b 0.0.0.0
+ENV PORT 3001
+CMD bundle exec rake db:migrate && bundle exec rails s -p 3001 -b 0.0.0.0

@@ -1,39 +1,25 @@
-import { Entity } from 'ngx-entity-service';
+import { Entity, EntityMapping } from "projects/ngx-entity-service/src/public-api";
+
 
 const KEYS =
   [
     'id',
-    'content'
+    'content',
+    'messageColor'
   ];
 
+export class MessageKind {
+  public id: string = "test";
+
+  constructor(kind: string) {
+    this.id = kind;
+  }
+}
+
 export class Message extends Entity {
-  public id: number = -1;
+  public id?: number = undefined;
   public content: string = '';
+  public kind?: MessageKind = undefined;
+  public messageColor: number = 0;
 
-  /**
-   * Convert entity to json - used on put/post
-   *
-   * @returns json
-   */
-  public toJson(): any {
-    return super.toJsonWithKeys(KEYS);
-  }
-
-  /**
-   * Update entity from passed in json object
-   *
-   * @param data json object with data for entity
-   */
-  public updateFromJson(data: any): void {
-    this.setFromJson(data, KEYS);
-    //this.username = data['username']; //etc
-  }
-
-  public get key(): string {
-    return this.id.toString();
-  }
-
-  public keyForJson(json: any): string {
-    return json.id;
-  }
 }

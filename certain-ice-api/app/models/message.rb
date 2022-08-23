@@ -6,7 +6,9 @@ class Message < ApplicationRecord
   def to_dto
     {
       id: self.id,
-      content: self.content
+      content: self.content,
+      message_kind: self.message_kind,
+      message_color: self.message_color
     }
   end
 end

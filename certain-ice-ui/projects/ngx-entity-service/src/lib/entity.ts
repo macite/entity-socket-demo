@@ -1,10 +1,4 @@
-/**
- * A mapping function used to map data into/out of an entity.
- *
- * @param object  The entity object or json to get the data from.
- * @returns       The data used to represent the keyed value from object.
- */
-export type TypeMapFunction = (object: any) => any;
+import { EntityMapping } from "./entity-mapping";
 
 /**
  * Entity class is used to represent an object within the main application model. This
@@ -23,80 +17,45 @@ export type TypeMapFunction = (object: any) => any;
  *    for CRUD operations.
  */
 export abstract class Entity {
+
   /**
-   * Construct an Entity object
-   *
-   * @param initialData An optional object storing the data to initialise the Entity with, calls @method updateFromJson with the data.
+   * Retains a copy of the json used to build the entity. This is used when
+   * mapping to json to determine which properties have been updated.
    */
-  constructor(initialData?: object) {
-    if (initialData) {
-      this.updateFromJson(initialData);
-    }
-  }
+  public originalJson: any = undefined;
 
   /**
    * Convert the entity object to json.
    *
    * @returns A json representation of the entity.
    */
-  public abstract toJson(): any;
+  public toJson<T extends Entity>(mappingData: EntityMapping<T>, ignoreKeys?: string[]): object {
+    return mappingData.mapEntityToJson((this as unknown) as T, ignoreKeys);
+  }
 
   /**
    * Update the current entity from information within the passed in json object.
    *
-   * @param data The json object containing the data to copy into the entity.
+   * @param data    The json object containing the data to copy into the entity.
+   * @param params  Additional paramters needed for reference during updating
    */
-  public abstract updateFromJson(data: any): void;
+  public updateFromJson<T extends Entity>(data: any, mappingData: EntityMapping<T>, onCompleteCallback?: (entity: T) => void): void {
+    if ( this.originalJson ) {
+      Object.assign(this.originalJson, data);
+    } else {
+      this.originalJson = data;
+    }
 
-  /**
-   * Update the entity with data from the passed in json object. This is used when updated
-   * details are fetched from the server. This method takes care of copying data by key
-   * from the json data to the entity itself.
-   *
-   * @param data  the new data to be stored within the entity
-   * @param keys  the keys of the data to map
-   * @param maps  an optional map of functions that are called to translate
-   *              specific values from the json where a straight data copy is not
-   *              appropriate/possible.
-   */
-  protected setFromJson(data: any, keys: string[], ignoredKeys?: string[], maps?: object): void {
-    keys.forEach((key) => {
-      if (maps && maps[key]) {
-        this[key] = maps[key](data[key]);
-      } else if ((ignoredKeys && ignoredKeys.indexOf(key) < 0) || !ignoredKeys) {
-        this[key] = data[key];
-      }
-    });
+    mappingData.updateEntityFromJson((this as unknown) as T, data, onCompleteCallback);
   }
 
   /**
-   * Gets the unique key which represents the Entity
-   * For example, an id: number, or for Task Entity, project ID and task Definition ID.
+   * Gets the unique key which represents the Entity. By default this returns
+   * the value of the id property.
    *
    * @returns string containing the unique key value
    */
-  public abstract get key(): string;
-
-  /**
-   * Copy the data within the entity into a json object and return. This is used when
-   * data needs to be copied from the entity and sent to the server. Data is copied from
-   * the entity for each of the @param keys which are directly copied from the entity
-   * into the json. Where data cannot be directly copied, the @param maps map can be
-   * use to provide key based mapping functions to translate the data.
-   *
-   * @param keys  an optional map of functions that are called to translate
-   *              specific values from the entity where a straight data copy is not
-   *              appropriate/possible.
-   */
-  protected toJsonWithKeys(keys: string[], maps?: object): object {
-    const json: object = {};
-    keys.forEach((key) => {
-      if (maps && maps[key]) {
-        json[key] = maps[key](this, key);
-      } else {
-        json[key] = this[key];
-      }
-    });
-    return json;
+  public get key(): string | number {
+    return this['id'];
   }
 }

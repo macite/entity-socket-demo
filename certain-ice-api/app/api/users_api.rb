@@ -16,7 +16,13 @@ class UsersApi < Grape::API
         :password
       )
 
-    User.create!(user_parameters)
+    result = User.create!(user_parameters)
+
+    # {
+    #   id: result.id,
+    #   username: result.username,
+    #   name: result.name
+    # }
   end
 
   desc 'Allow updating of a user'
@@ -51,9 +57,18 @@ class UsersApi < Grape::API
   get '/users' do
     filter = params[:filter]
     if filter.nil?
-      User.all
+      result = User.all
     else
-      User.where('name LIKE ?', "#{filter}%")
+      result = User.where('name LIKE ?', "#{filter}%")
     end
+
+    result
+    # result.map do |user|
+    #   {
+    #     id: user.id,
+    #     username: user.username,
+    #     name: user.name
+    #   }
+    # end
   end
 end

@@ -2,6 +2,12 @@
 
 This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.2.0.
 
+```[bash]
+npm run ng build ngx-entity-service
+cd dist/ngx-entity-service
+npm publish
+```
+
 ## Code scaffolding
 
 Run `ng generate component component-name --project ngx-entity-service` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project ngx-entity-service`.
@@ -9,7 +15,7 @@ Run `ng generate component component-name --project ngx-entity-service` to gener
 
 ## Build
 
-Run `ng build ngx-entity-service` to build the project. The build artifacts will be stored in the `dist/` directory.
+Run `npm run ng build ngx-entity-service` to build the project. The build artifacts will be stored in the `dist/` directory.
 
 ## Publishing
 

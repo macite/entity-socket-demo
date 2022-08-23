@@ -4,7 +4,7 @@ services:
     container_name: certain-ice-api
     build: ./certain-ice-api
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
       - ./certain-ice-api:/api
     depends_on:
@@ -15,13 +15,14 @@ services:
       DEV_DB_USERNAME: dfire
       DEV_DB_PASSWORD: pwd
       DEV_DB_HOST: certain-ice-dev-db
+      PORT: 3001
     command:
-      /bin/bash -c 'rm -f /api/tmp/pids/server.pid && rails s -b 0.0.0.0'
+      /bin/bash -c 'rm -f /api/tmp/pids/server.pid && rails s -p 3001 -b 0.0.0.0'
   ui:
     container_name: certain-ice-ui
     build: ./certain-ice-ui
     ports:
-      - "4200:4200"
+      - "4201:4201"
     volumes:
       - ./certain-ice-ui:/certain-ice-ui
     depends_on:

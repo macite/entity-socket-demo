@@ -19,11 +19,13 @@
         <th scope="col">Actions</th>
       </tr>
     </thead>
-    <tbody *ngFor="let message of messages">
+    <tbody *ngFor="let message of messages | async">
       <tr class="table-light">
         <th scope="row">{{message.id}}</th>
         <td>{{message.content}}</td>
-        <td><button type="button" class="btn btn-secondary btn-sml" (click)="deleteMessage(message)">Delete</button>
+        <td>
+          <button type="button" class="btn btn-secondary btn-sml" (click)="deleteMessage(message)">Delete</button>
+          <button type="button" class="btn btn-secondary btn-sml" (click)="updateMessage(message)">Update</button>
         </td>
     </tbody>
   </table>

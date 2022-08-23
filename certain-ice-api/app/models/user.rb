@@ -3,4 +3,8 @@ class User < ApplicationRecord
   validates :name,     presence: true
   validates :password, presence: true
   
+
+  def say_hello
+    puts "Hello from #{self.name}!"
+  end
 end
