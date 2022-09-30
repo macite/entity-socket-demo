@@ -121,7 +121,7 @@ export abstract class EntityService<T extends Entity> {
    * @returns a new instance of the entity, initialised with the json data.
    */
   public buildInstance(json: object, options?: RequestOptions<T>): T {
-    const cache = options?.sourceCache;
+    const cache = options?.sourceCache || options?.cache;
     var result: T;
 
     // Get the mapping, constructorParams, and mapping callback from the request options, or mapping
@@ -328,6 +328,10 @@ export abstract class EntityService<T extends Entity> {
   private convertCollection(collection: any, options?: RequestOptions<T>): T[] {
     return collection.map((
       data: any) => {
+        if ( options?.cache && options.cache.has(this.keyForJson(data)) ) {
+          const result = options.cache.get(this.keyForJson(data));
+          result?.updateFromJson(data, this.mappingFor(options), options.mappingCompleteCallback);
+        }
       const result = this.buildInstance(data, options);
       return result;
     });
@@ -342,7 +346,7 @@ export abstract class EntityService<T extends Entity> {
    * @param json The json object to get the key from
    * @returns string containing the unique key value
    */
-  public keyForJson(json: any): string {
+  public keyForJson(json: any): string | number {
     return json[this.keyName];
   }
 
