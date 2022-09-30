@@ -69,6 +69,12 @@ export class EntityCache<T extends Entity> {
   private cache: Map<string | number, T> = new Map<string | number, T>();
 
   /**
+   * An array based copy of the data from the cache. Used to optimise the use
+   * of the current values property.
+   */
+  private cacheArray: T[] = [];
+
+  /**
    * All of the queries made to the server, and their associated responses.
    */
   private queryKeys: Map<string, QueryData<T>> = new Map<string, QueryData<T>>();
@@ -130,10 +136,6 @@ export class EntityCache<T extends Entity> {
    */
   public add(entity: T): void {
     this.set(entity.key, entity);
-
-    if ( !this.dontAnnounce ) {
-      this.cacheSubject.next(this.currentValues);
-    }
   }
 
   /**
@@ -159,6 +161,16 @@ export class EntityCache<T extends Entity> {
   }
 
   /**
+   * Update the internal cache array and notify cache observers.
+   */
+  private updateCacheArray(notifyObservers: boolean = true): void {
+    this.cacheArray = Array.from(this.cache.values());
+    if (notifyObservers) {
+      this.cacheSubject.next(this.currentValuesClone());
+    }
+  }
+
+  /**
    * Return an observable that publishes all changes to the cache.
    *
    * This is a long running observable which will need to be unsubscribed!
@@ -168,10 +180,22 @@ export class EntityCache<T extends Entity> {
   }
 
   /**
-   * Returns all values in the cache
+   * Returns all values in the cache. Use @see currentValuesClone for a mutable array copy.
+   *
+   * @returns an immutable array with the contents of the cache.
    */
-  public get currentValues(): T[] {
-    return Array.from(this.cache.values());
+  public get currentValues(): readonly T[] {
+    return this.cacheArray;
+  }
+
+  /**
+   * Returns a mutable clone of the current values in the cache. Where possible consider using
+   * @see currentValues instead.
+   *
+   * @returns a clone of the current values from the cache.
+   */
+  public currentValuesClone(): T[] {
+    return Array.from(this.cacheArray);
   }
 
   /**
@@ -184,7 +208,7 @@ export class EntityCache<T extends Entity> {
     this.cache.set(key, entity);
 
     if ( !this.dontAnnounce ) {
-      this.cacheSubject.next(this.currentValues);
+      this.updateCacheArray();
     }
   }
 
@@ -204,7 +228,7 @@ export class EntityCache<T extends Entity> {
 
     const result = this.cache.delete(key);
     if (result && !this.dontAnnounce) {
-      this.cacheSubject.next(this.currentValues);
+      this.updateCacheArray();
     }
 
     return result;
@@ -223,6 +247,7 @@ export class EntityCache<T extends Entity> {
   public clear() : void {
     this.cache.clear();
     this.queryKeys.clear();
+    this.cacheArray = [];
     this.cacheSubject.next([]);
   }
 
@@ -247,13 +272,13 @@ export class EntityCache<T extends Entity> {
 
         // Finished... so now announce all changes.
         this.dontAnnounce = false;
-        this.cacheSubject.next(this.currentValues);
+        this.updateCacheArray();
       }),
 
       // Map the response based on the cache hit return value
       map((entityList) => {
         if ( options?.onQueryCacheReturn === "all" ) {
-          return this.currentValues;
+          return this.currentValuesClone();
         } else {
           return entityList;
         }
