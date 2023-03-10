@@ -69,7 +69,7 @@ export abstract class EntityService<T extends Entity> {
             result = result ? result[value] : undefined;
           });
 
-          return result ? `${result}` : '';
+          return result ? encodeURIComponent(`${result}`) : '';
         } else {
           return "";
         }
