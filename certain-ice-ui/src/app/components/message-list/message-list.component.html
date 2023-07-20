@@ -16,6 +16,7 @@
       <tr>
         <th scope="col">ID</th>
         <th scope="col">Content</th>
+        <th scope="col">Changes?</th>
         <th scope="col">Actions</th>
       </tr>
     </thead>
@@ -23,9 +24,11 @@
       <tr class="table-light">
         <th scope="row">{{message.id}}</th>
         <td>{{message.content}}</td>
+        <td>{{ messageHasChanges(message) }}</td>
         <td>
           <button type="button" class="btn btn-secondary btn-sml" (click)="deleteMessage(message)">Delete</button>
           <button type="button" class="btn btn-secondary btn-sml" (click)="updateMessage(message)">Update</button>
+          <button type="button" class="btn btn-secondary btn-sml" (click)="changeMessage(message)">Change</button>
         </td>
     </tbody>
   </table>

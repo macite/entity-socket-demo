@@ -58,4 +58,15 @@ export abstract class Entity {
   public get key(): string | number {
     return this['id'];
   }
+
+  /**
+   * Determine if an entity has been changed.
+   *
+   * @param mappingData the mapping used to convert the entity to json
+   * @returns true if there are changes to the entity
+   */
+  public hasChanges<T extends Entity>(mappingData: EntityMapping<T>): boolean {
+    const changes = this.toJson(mappingData);
+    return JSON.stringify(changes) !== '{}';
+  }
 }

@@ -69,6 +69,14 @@ export class MessageListComponent implements OnInit {
     this.messageService.update(message).subscribe( (response : any) => console.log(response) );
   }
 
+  public messageHasChanges(message: Message): boolean {
+    return message.hasChanges(this.messageService.mapping);
+  }
+
+  public changeMessage(message: Message) {
+    message.messageColor += 1;
+  }
+
   public deleteMessage(message: Message) {
     this.messageService.delete(message).subscribe( (response : any) => console.log(response) );
   }
